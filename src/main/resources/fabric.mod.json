@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "luckybindings",
+  "version": "${version}",
+  "name": "LuckyBindings",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/luckybindings/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.luckyluuk.luckybindings.client.LuckyBindingsClient"
+    ],
+    "main": [
+      "me.luckyluuk.luckybindings.LuckyBindings"
+    ]
+  },
+  "mixins": [
+    "luckybindings.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
