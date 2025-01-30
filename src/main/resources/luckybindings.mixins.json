@@ -4,6 +4,7 @@
   "package": "me.luckyluuk.luckybindings.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "LuckyMixin"
   ],
   "client": [
   ],
