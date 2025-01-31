@@ -1,13 +1,13 @@
 package me.luckyluuk.luckybindings.handlers;
 
-import me.luckyluuk.luckybindings.actions.Action;
-import me.luckyluuk.luckybindings.actions.ExecuteCommand;
-import me.luckyluuk.luckybindings.actions.PathHighlight;
-import me.luckyluuk.luckybindings.actions.PrepareChat;
+import me.luckyluuk.luckybindings.actions.*;
 import net.minecraft.util.math.BlockPos;
+import org.jetbrains.annotations.NotNull;
 
+// TODO: This supports only Action<String> I guess so figure out how to work with custom Controllers for YACL
 public class ActionFactory {
-  public static Action createAction(String actionType, String[] actionParams) {
+  @NotNull
+  public static Action<?> createAction(String actionType, String[] actionParams) {
     return switch(actionType) {
       case "path_highlight" -> {
         BlockPos target = new BlockPos(
@@ -19,7 +19,7 @@ public class ActionFactory {
       }
       case "prepare_chat" -> new PrepareChat(actionParams[0]);
       case "execute_command" -> new ExecuteCommand(actionParams[0]);
-      default -> null;
+      default -> new Nothing();
     };
   }
 }

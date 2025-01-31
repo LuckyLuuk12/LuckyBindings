@@ -1,12 +1,16 @@
 package me.luckyluuk.luckybindings.actions;
 
+import dev.isxander.yacl3.api.Option;
+import dev.isxander.yacl3.api.controller.ControllerBuilder;
+import dev.isxander.yacl3.api.controller.StringControllerBuilder;
 import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 
-public class ExecuteCommand extends Action {
+public class ExecuteCommand extends Action<String> {
   private final String command;
 
   public ExecuteCommand(String command) {
@@ -18,6 +22,10 @@ public class ExecuteCommand extends Action {
   public void execute(Player p) {
     if (p == null) return;
     p.sendCommand(command);
+  }
+  @Override
+  public @NotNull ControllerBuilder<String> getController(Option<String> option) {
+    return StringControllerBuilder.create(option);
   }
 
   static public String parse(String command, Player p) {

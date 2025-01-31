@@ -1,5 +1,8 @@
 package me.luckyluuk.luckybindings.actions;
 
+import dev.isxander.yacl3.api.Option;
+import dev.isxander.yacl3.api.controller.ControllerBuilder;
+import dev.isxander.yacl3.api.controller.StringControllerBuilder;
 import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EntityType;
@@ -8,10 +11,11 @@ import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
-public class PathHighlight extends Action {
+public class PathHighlight extends Action<String> {
   private final BlockPos target;
   private final int range;
 
@@ -42,6 +46,10 @@ public class PathHighlight extends Action {
         spawnParticle(pos);
       }
     }
+  }
+  @Override
+  public @NotNull ControllerBuilder<String> getController(Option<String> option) {
+    return StringControllerBuilder.create(option);
   }
 
   private void spawnParticle(BlockPos pos) {
