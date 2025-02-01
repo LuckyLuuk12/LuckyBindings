@@ -8,7 +8,8 @@
   "contact": {
     "homepage": "https://modrinth.com/mod/luckybindings",
     "sources": "https://github.com/LuckyLuuk12/LuckyBindings",
-    "issues": "https://github.com/LuckyLuuk12/LuckyBindings/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen"
+    "issues": "https://github.com/LuckyLuuk12/LuckyBindings/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen",
+    "discord": "https://discord.gg/qRTevFvHbx "
   },
   "license": "All-Rights-Reserved",
   "icon": "assets/icon.png",
