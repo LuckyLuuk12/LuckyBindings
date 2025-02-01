@@ -41,7 +41,7 @@ public class YaclScreenGenerator {
   private static OptionGroup.Builder  getPredefinedKeyBindings(OptionGroup.Builder optionGroup) {
     for(Map.Entry<String, Tuple<String, String>> entry : ModConfig.predefinedKeyBinds.entrySet()) {
       optionGroup.option(Option.<Boolean>createBuilder()
-        .name(Text.of(entry.getKey()))
+        .name(Text.of(entry.getKey() + entry.getValue().fst() + entry.getValue().snd()))
         .description(OptionDescription.of(Text.of("")))
         .binding(
           true,
