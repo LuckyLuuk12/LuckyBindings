@@ -5,6 +5,7 @@ import dev.isxander.yacl3.api.utils.Dimension;
 import dev.isxander.yacl3.gui.AbstractWidget;
 import dev.isxander.yacl3.gui.YACLScreen;
 import dev.isxander.yacl3.gui.controllers.string.IStringController;
+import me.luckyluuk.luckybindings.config.elements.TwoStringControllerElement;
 import me.luckyluuk.luckybindings.model.Tuple;
 import net.minecraft.text.Text;
 
@@ -29,9 +30,11 @@ public class KeyValueController implements IStringController<Tuple<String, ?>> {
    * @return The value of the option's pending value.
    */
   public Object getTupleValue() {
+    if(option.pendingValue().getSecond() == null) return null;
     return option.pendingValue().getSecond();
   }
   public String getString2() {
+    if(option.pendingValue().getSecond() == null) return "";
     return option.pendingValue().getSecond().toString();
   }
 
@@ -78,6 +81,6 @@ public class KeyValueController implements IStringController<Tuple<String, ?>> {
   }
   @Override
   public AbstractWidget provideWidget(YACLScreen screen, Dimension<Integer> widgetDimension) {
-    return IStringController.super.provideWidget(screen, widgetDimension);
+    return new TwoStringControllerElement(this, screen, widgetDimension, false);
   }
 }

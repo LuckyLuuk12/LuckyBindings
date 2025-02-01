@@ -10,8 +10,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 
-public class ExecuteCommand extends Action<String> {
-  private final String command;
+public class ExecuteCommand extends Action {
+  private String command;
+
+  public ExecuteCommand() {
+    super("execute_command");
+  }
 
   public ExecuteCommand(String command) {
     super("execute_command");
@@ -23,9 +27,15 @@ public class ExecuteCommand extends Action<String> {
     if (p == null) return;
     p.sendCommand(command);
   }
+  /**
+   * Assumes the first argument is the command to execute
+   *
+   * @param args The arguments to apply
+   */
   @Override
-  public @NotNull ControllerBuilder<String> getController(Option<String> option) {
-    return StringControllerBuilder.create(option);
+  public void applyArguments(String[] args) {
+    if (args.length < 1) return;
+    this.command = String.join(" ", args);
   }
 
   static public String parse(String command, Player p) {

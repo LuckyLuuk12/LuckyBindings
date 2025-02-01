@@ -1,12 +1,12 @@
 package me.luckyluuk.luckybindings;
 
+import dev.isxander.yacl3.config.GsonConfigInstance;
+import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import me.luckyluuk.luckybindings.config.ModConfig;
 import me.luckyluuk.luckybindings.handlers.KeyHandler;
-import me.shedaniel.autoconfig.AutoConfig;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 
 /**
  * This mod aims to provide the following features:
@@ -21,12 +21,11 @@ import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 public class LuckyBindings implements ModInitializer {
   public static final String MOD_ID = "luckybindings";
   public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-  public static ModConfig CONFIG = null;
+  public static ConfigClassHandler<ModConfig> CONFIG = ModConfig.HANDLER;
 
   @Override
   public void onInitialize() {
-    AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
-    CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+    CONFIG.load();
     KeyHandler.initialize();
   }
 }

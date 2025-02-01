@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 // TODO: This supports only Action<String> I guess so figure out how to work with custom Controllers for YACL
 public class ActionFactory {
   @NotNull
-  public static Action<?> createAction(String actionType, String[] actionParams) {
+  public static Action createAction(String actionType, String[] actionParams) {
     return switch(actionType) {
       case "path_highlight" -> {
         BlockPos target = new BlockPos(

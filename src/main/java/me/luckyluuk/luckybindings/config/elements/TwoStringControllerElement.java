@@ -19,7 +19,7 @@ public class TwoStringControllerElement extends StringControllerElement {
 
   public TwoStringControllerElement(KeyValueController control, YACLScreen screen, Dimension<Integer> dim, boolean instantApply) {
     super(control, screen, dim, instantApply);
-    inputField2 = control.getString2();
+    inputField2 = control.getString2() == null ? "" : control.getString2();
     inputFieldFocused2 = false;
   }
 
@@ -133,14 +133,14 @@ public class TwoStringControllerElement extends StringControllerElement {
   public void setDimension(Dimension<Integer> dim) {
     super.setDimension(dim);
 
-    int width = Math.max(6, Math.min(textRenderer.getWidth(getValueText2()), getUnshiftedLength()));
+    int width = Math.max(6, Math.min(textRenderer.getWidth(
+      getValueText2()),
+      getUnshiftedLength()));
     inputFieldBounds2 = Dimension.ofInt(dim.xLimit() - getXPadding() - width, dim.centerY() - textRenderer.fontHeight / 2 + 20, width, textRenderer.fontHeight); // Adjust Y position for second text field
   }
 
   protected Text getValueText2() {
-    if (!inputFieldFocused2 && inputField2.isEmpty())
-      return emptyText2;
-
-    return instantApply || !inputFieldFocused2 ? ((KeyValueController) control).formatValue2() : Text.literal(inputField2);
+    if (!inputFieldFocused2 && (inputField2 == null || inputField2.isEmpty())) return emptyText2;
+    return instantApply || !inputFieldFocused2 ? ((KeyValueController) control).formatValue2() : Text.literal(inputField2 == null ? "" : inputField2);
   }
 }

@@ -1,8 +1,5 @@
 package me.luckyluuk.luckybindings.actions;
 
-import dev.isxander.yacl3.api.Option;
-import dev.isxander.yacl3.api.controller.ControllerBuilder;
-import dev.isxander.yacl3.api.controller.StringControllerBuilder;
 import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EntityType;
@@ -11,13 +8,12 @@ import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
-public class PathHighlight extends Action<String> {
-  private final BlockPos target;
-  private final int range;
+public class PathHighlight extends Action {
+  private BlockPos target;
+  private int range;
 
   public PathHighlight(BlockPos target, int... range) {
     super("path_highlight");
@@ -47,9 +43,22 @@ public class PathHighlight extends Action<String> {
       }
     }
   }
+
+  /**
+   * Assumes the arguments are the x, y, z coordinates of the target block.
+   * As fourth argument, the range can be specified.
+   * @param args The arguments to apply.
+   */
   @Override
-  public @NotNull ControllerBuilder<String> getController(Option<String> option) {
-    return StringControllerBuilder.create(option);
+  public void applyArguments(String[] args) {
+    if (args.length < 3) return;
+    int x = tryGetInt(args[0]);
+    int y = tryGetInt(args[1]);
+    int z = tryGetInt(args[2]);
+    this.target = new BlockPos(x, y, z);
+    if (args.length > 3) {
+      this.range = tryGetInt(args[3]);
+    }
   }
 
   private void spawnParticle(BlockPos pos) {
@@ -59,5 +68,13 @@ public class PathHighlight extends Action<String> {
       pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5,
       0, 0.05, 0
     );
+  }
+
+  private int tryGetInt(String s) {
+    try {
+      return Integer.parseInt(s);
+    } catch (NumberFormatException e) {
+      return 0;
+    }
   }
 }
