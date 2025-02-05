@@ -1,41 +1,50 @@
 package me.luckyluuk.luckybindings.actions;
 
-import dev.isxander.yacl3.api.Option;
-import dev.isxander.yacl3.api.controller.ControllerBuilder;
-import dev.isxander.yacl3.api.controller.StringControllerBuilder;
 import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
 
 public class ExecuteCommand extends Action {
   private String command;
 
-  public ExecuteCommand() {
-    super("execute_command");
+  public ExecuteCommand(String... args) {
+    super("execute_command", """
+    Executes a command as the player. The command can use the following
+    placeholders:
+    - %main_hand%: The name of the item in the player's main hand.
+    - %off_hand%: The name of the item in the player's off hand.
+    - %player%: The name of the player.
+    - %player_display_name%: The display name of the player.
+    - %x%: The x-coordinate of the player.
+    - %y%: The y-coordinate of the player.
+    - %z%: The z-coordinate of the player.
+    - %yaw%: The yaw of the player.
+    - %pitch%: The pitch of the player.
+    - %head_yaw%: The head yaw of the player.
+    - %target%: The name of the entity the player is looking at.
+    - %target_x%: The x-coordinate of the entity the player is looking at.
+    - %target_y%: The y-coordinate of the entity the player is looking at.
+    - %target_z%: The z-coordinate of the entity the player is looking at.
+    - %target_yaw%: The yaw of the entity the player is looking at.
+    - %target_pitch%: The pitch of the entity the player is looking at.
+    - %target_head_yaw%: The head yaw of the entity the player is looking at.
+    - %target_display_name%: The display name of the entity the player is looking at.
+    """);
+    setArgs(args);
   }
 
-  public ExecuteCommand(String command) {
-    super("execute_command");
-    this.command = command;
+  @Override
+  public void setArgs(String... args) {
+    this.command = args.length > 0 ? args[0] : "";
   }
 
   @Override
   public void execute(Player p) {
     if (p == null) return;
-    p.sendCommand(command);
-  }
-  /**
-   * Assumes the first argument is the command to execute
-   *
-   * @param args The arguments to apply
-   */
-  @Override
-  public void applyArguments(String[] args) {
-    if (args.length < 1) return;
-    this.command = String.join(" ", args);
+    p.networkHandler.sendCommand(parse(command, p));
   }
 
   static public String parse(String command, Player p) {
@@ -103,5 +112,12 @@ public class ExecuteCommand extends Action {
       }
     }
     return command;
+  }
+
+  @Override
+  public String toString() {
+    return "ExecuteCommand{" +
+      "command='" + command + '\'' +
+      '}';
   }
 }

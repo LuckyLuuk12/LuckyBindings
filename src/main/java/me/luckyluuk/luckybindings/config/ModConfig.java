@@ -6,24 +6,20 @@ import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
 import lombok.Data;
-import me.luckyluuk.luckybindings.model.Tuple;
+import me.luckyluuk.luckybindings.actions.Actions;
+import me.luckyluuk.luckybindings.model.KeyBind;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
-//@Config(name = "luckybindings")
 public class ModConfig {
-  @SerialEntry
-  public static boolean FIRST_RUN = true;
   public static ConfigClassHandler<ModConfig> HANDLER = ConfigClassHandler.createBuilder(ModConfig.class)
-    .id(Identifier.of("luckybindings", "config"))
+    .id(Identifier.of("luckybindings", "LuckyBindings/config"))
       .serializer(config -> GsonConfigSerializerBuilder.create(config)
-        .setPath(FabricLoader.getInstance().getConfigDir().resolve("luckybindings.json5"))
+        .setPath(FabricLoader.getInstance().getConfigDir().resolve("LuckyBindings/luckybindings.json5"))
         .appendGsonBuilder(GsonBuilder::setPrettyPrinting) // not needed, pretty print by default
         .setJson5(true)
         .build())
@@ -31,42 +27,26 @@ public class ModConfig {
 
 
   @SerialEntry
-  public static Map<String, Tuple<String, String>> dynamicKeyBinds = new HashMap<>();
-  public static Map<String, Tuple<String, String>> predefinedKeyBinds = getPredefined();
+  public static List<KeyBind> dynamicKeyBinds = new ArrayList<>();
+  public static List<KeyBind> predefinedKeyBinds = getPredefined();
 
-  private static Map<String, Tuple<String, String>> getPredefined() {
-    Map<String, Tuple<String, String>> map = new HashMap<>();
-    map.put("key.luckybindings.r", new Tuple<>("prepare_chat", "/f r "));
-    map.put("key.luckybindings.g", new Tuple<>("prepare_chat", "/gesture "));
-    map.put("key.luckybindings.v", new Tuple<>("execute_command", "/allowance"));
-    map.put("key.luckybindings.y", new Tuple<>("prepare_chat", "/yell "));
-    map.put("key.luckybindings.h", new Tuple<>("prepare_chat", "/lay "));
-    map.put("key.luckybindings.b", new Tuple<>("execute_command", "/carry"));
-    map.put("key.luckybindings.u", new Tuple<>("execute_command", "/crawl"));
-    map.put("key.luckybindings.j", new Tuple<>("prepare_chat", "/whisper "));
-    map.put("key.luckybindings.n", new Tuple<>("prepare_chat", "/mec "));
-    map.put("key.luckybindings.i", new Tuple<>("execute_command", "/bellyflop"));
-    map.put("key.luckybindings.k", new Tuple<>("execute_command", "/shiver"));
-    map.put("key.luckybindings.m", new Tuple<>("prepare_chat", "/me "));
-    map.put("key.luckybindings.o", new Tuple<>("prepare_chat", "/ooc "));
-    map.put("key.luckybindings.l", new Tuple<>("prepare_chat", "/looc "));
-    map.put("key.luckybindings.,", new Tuple<>("execute_command", "/sit"));
-    if(FIRST_RUN) {
-      dynamicKeyBinds.putAll(map);
-      FIRST_RUN = false;
-    }
-    return map;
+  private static List<KeyBind> getPredefined() {
+    List<KeyBind> list = new ArrayList<>();
+    list.add(new KeyBind("r", Actions.PrepareChat, "[SchoolRP] Prepares a friend reply command in chat", true, "/f r "));
+    list.add(new KeyBind("g", Actions.PrepareChat, "[SchoolRP] Prepares a gesture command in chat", true, "/gesture "));
+    list.add(new KeyBind("v", Actions.ExecuteCommand, "[SchoolRP] Lets you see your allowance", true, "allowance"));
+    list.add(new KeyBind("y", Actions.PrepareChat, "[SchoolRP] Prepares a yell command in chat", true, "/yell "));
+    list.add(new KeyBind("h", Actions.ExecuteCommand, "[SchoolRP] Uses /lay to lay down on the ground", true, "lay"));
+    list.add(new KeyBind("b", Actions.ExecuteCommand, "[SchoolRP] Executes /carry to allow someone to get carried by you", true, "carry"));
+    list.add(new KeyBind("u", Actions.ExecuteCommand, "[SchoolRP] Starts crawling on the ground", true, "crawl"));
+    list.add(new KeyBind("j", Actions.PrepareChat, "[SchoolRP] Prepares a whisper command in chat", true, "/whisper "));
+    list.add(new KeyBind("n", Actions.PrepareChat, "[SchoolRP] Prepares the /mec command in chat", true, "/mec "));
+    list.add(new KeyBind("i", Actions.ExecuteCommand, "[SchoolRP] Performs a belly flop instantly", true, "bellyflop"));
+    list.add(new KeyBind("k", Actions.ExecuteCommand, "[SchoolRP] Makes you start shivering", true, "shiver"));
+    list.add(new KeyBind("m", Actions.PrepareChat, "[SchoolRP] Prepares a /me in chat for you", true, "/me "));
+    list.add(new KeyBind("o", Actions.PrepareChat, "[SchoolRP] Prepares out of character chat (OOC)", true, "/ooc "));
+    list.add(new KeyBind("semicolon", Actions.PrepareChat, "[SchoolRP] Prepares local out of character chat (LOOC)", true, "/looc "));
+    list.add(new KeyBind("comma", Actions.ExecuteCommand, "[SchoolRP] Makes you sit down", true, "sit"));
+    return list;
   }
-
-//  /**
-//   * Actually reads the JSON file to see if the key is enabled
-//   * @param key The key to check
-//   */
-//  public static boolean isEnabled(String key) {
-//    Path path = FabricLoader.getInstance().getConfigDir().resolve("luckybindings.json5");
-//    File file = path.toFile();
-//    if (!file.exists()) return false;
-//    return
-//  }
-
 }

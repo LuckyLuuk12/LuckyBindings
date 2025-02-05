@@ -7,18 +7,35 @@ import net.minecraft.entity.ai.pathing.*;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import java.util.stream.Stream;
 
 public class PathHighlight extends Action {
   private BlockPos target;
-  private int range;
+  private Integer range;
 
-  public PathHighlight(BlockPos target, int... range) {
-    super("path_highlight");
-    this.target = target;
-    this.range = range.length > 0 ? range[0] : 128;
+  public PathHighlight(String... args) {
+    super("path_highlight", """
+    Highlights the path to a target block using particles.
+    The target block is specified by its x, y, z coordinates.
+    Optionally, a range can be specified to only highlight the path
+    if the player is within that range.
+    """);
+    setArgs(args);
+  }
+
+  @Override
+  public void setArgs(String... args) {
+    try {
+      target = new BlockPos(
+        Integer.parseInt(args[0]),
+        Integer.parseInt(args[1]),
+        Integer.parseInt(args[2])
+      );
+    } catch (NumberFormatException ignored) {}
+    range = args.length > 3 ? Integer.parseInt(args[3]) : null;
   }
 
   /**
@@ -27,7 +44,13 @@ public class PathHighlight extends Action {
    */
   @Override
   public void execute(Player p) {
-    if (p == null) return;
+    if (p == null || target == null) return;
+    // If range is specified, check if the player is within range
+    if (range != null) {
+      double distance = p.getPos().distanceTo(new Vec3d(target.getX(), target.getY(), target.getZ()));
+      if (distance > range) return;
+    }
+    p.sendMessage("Highlighting path to: " + target.getX() + ", " + target.getY() + ", " + target.getZ());
     World world = p.getWorld();
     PathAwareEntity tempEntity = new PathAwareEntity(EntityType.ZOMBIE, world) {}; // Dummy mob
     tempEntity.setPosition(p.getX(), p.getY(), p.getZ());
@@ -44,23 +67,6 @@ public class PathHighlight extends Action {
     }
   }
 
-  /**
-   * Assumes the arguments are the x, y, z coordinates of the target block.
-   * As fourth argument, the range can be specified.
-   * @param args The arguments to apply.
-   */
-  @Override
-  public void applyArguments(String[] args) {
-    if (args.length < 3) return;
-    int x = tryGetInt(args[0]);
-    int y = tryGetInt(args[1]);
-    int z = tryGetInt(args[2]);
-    this.target = new BlockPos(x, y, z);
-    if (args.length > 3) {
-      this.range = tryGetInt(args[3]);
-    }
-  }
-
   private void spawnParticle(BlockPos pos) {
     if(MinecraftClient.getInstance().world == null) return;
     MinecraftClient.getInstance().world.addParticle(
@@ -70,11 +76,11 @@ public class PathHighlight extends Action {
     );
   }
 
-  private int tryGetInt(String s) {
-    try {
-      return Integer.parseInt(s);
-    } catch (NumberFormatException e) {
-      return 0;
-    }
+  @Override
+  public String toString() {
+    return "PathHighlight{" +
+            "target=" + target +
+            ", range=" + range +
+            '}';
   }
 }

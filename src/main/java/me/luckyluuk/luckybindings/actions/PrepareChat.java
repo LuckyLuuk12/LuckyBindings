@@ -1,8 +1,5 @@
 package me.luckyluuk.luckybindings.actions;
 
-import dev.isxander.yacl3.api.Option;
-import dev.isxander.yacl3.api.controller.ControllerBuilder;
-import dev.isxander.yacl3.api.controller.StringControllerBuilder;
 import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -15,13 +12,18 @@ import net.minecraft.client.gui.screen.ChatScreen;
 public class PrepareChat extends Action {
   private String text;
 
-  public PrepareChat() {
-    super("prepare_chat");
+  public PrepareChat(String... args) {
+    super("prepare_chat", """
+    Opens the chat for the player and prepares some text for them to send.
+    You can specify the text to prepare by passing it as the first argument.
+    If no argument is passed, the chat will be opened with no text.
+    """);
+    setArgs(args);
   }
 
-  public PrepareChat(String text) {
-    super("prepare_chat");
-    this.text = text;
+  @Override
+  public void setArgs(String... args) {
+    this.text = args.length > 0 ? args[0] : "";
   }
 
   @Override
@@ -31,7 +33,9 @@ public class PrepareChat extends Action {
   }
 
   @Override
-  public void applyArguments(String[] args) {
-    this.text = String.join(" ", args);
+  public String toString() {
+    return "PrepareChat{" +
+            "text='" + text + '\'' +
+            '}';
   }
 }
