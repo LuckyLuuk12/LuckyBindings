@@ -13,14 +13,14 @@ public class YaclScreenGenerator {
     return YetAnotherConfigLib.createBuilder()
       .title(Text.of("LuckyBindings Configuration"))
       .save(KeyHandler::reload)
+      .category(getDynamicKeyBindings(ConfigCategory.createBuilder())
+        .build()) // end of dynamic key bindings category
       .category(ConfigCategory.createBuilder()
         .name(Text.of("Predefined Key Bindings"))
         .tooltip(Text.literal("Enable or disable predefined key bindings"))
         .group(getPredefinedKeyBindings(OptionGroup.createBuilder())
           .build())
         .build()) // end of predefined key bindings category
-      .category(getDynamicKeyBindings(ConfigCategory.createBuilder())
-        .build()) // end of dynamic key bindings category
       .build();
   }
 

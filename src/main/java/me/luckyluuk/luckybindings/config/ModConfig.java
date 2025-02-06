@@ -1,33 +1,52 @@
 package me.luckyluuk.luckybindings.config;
 
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
 import lombok.Data;
+import me.luckyluuk.luckybindings.LuckyBindings;
 import me.luckyluuk.luckybindings.actions.Actions;
 import me.luckyluuk.luckybindings.model.KeyBind;
+import me.luckyluuk.luckybindings.model.KeyBindSerializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 public class ModConfig {
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+  private static final String CONFIG_PATH = "LuckyBindings/luckybindings.json5";
+
+
   public static ConfigClassHandler<ModConfig> HANDLER = ConfigClassHandler.createBuilder(ModConfig.class)
-    .id(Identifier.of("luckybindings", "LuckyBindings/config"))
+    .id(Identifier.of(LuckyBindings.MOD_ID, "LuckyBindings/config"))
       .serializer(config -> GsonConfigSerializerBuilder.create(config)
-        .setPath(FabricLoader.getInstance().getConfigDir().resolve("LuckyBindings/luckybindings.json5"))
-        .appendGsonBuilder(GsonBuilder::setPrettyPrinting) // not needed, pretty print by default
+        .setPath(FabricLoader.getInstance().getConfigDir().resolve(CONFIG_PATH))
+        .appendGsonBuilder(gsonBuilder -> gsonBuilder
+          .setPrettyPrinting()
+          .registerTypeAdapter(KeyBind.class, new KeyBindSerializer())) // not needed, pretty print by default
         .setJson5(true)
         .build())
       .build();
 
+  public static void save() {
+    try (FileWriter writer = new FileWriter(FabricLoader.getInstance().getConfigDir()+"/"+CONFIG_PATH)) {
+      GSON.toJson(dynamicKeyBinds, writer);
+    } catch (IOException e) {
+      LuckyBindings.LOGGER.error("Failed to save config:\n", e);
+    }
+  }
 
   @SerialEntry
-  public static List<KeyBind> dynamicKeyBinds = new ArrayList<>();
+  public static List<KeyBind> dynamicKeyBinds = getDynamic();
   public static List<KeyBind> predefinedKeyBinds = getPredefined();
 
   private static List<KeyBind> getPredefined() {
@@ -48,5 +67,19 @@ public class ModConfig {
     list.add(new KeyBind("semicolon", Actions.PrepareChat, "[SchoolRP] Prepares local out of character chat (LOOC)", true, "/looc "));
     list.add(new KeyBind("comma", Actions.ExecuteCommand, "[SchoolRP] Makes you sit down", true, "sit"));
     return list;
+  }
+
+  /**
+   * Opens the CONFIG file and reads the dynamic keybinds from it
+   * @return a list of dynamic keybinds
+   */
+  private static List<KeyBind> getDynamic() {
+    try (FileReader reader = new FileReader(FabricLoader.getInstance().getConfigDir().resolve(CONFIG_PATH).toFile())) {
+      KeyBind[] keyBindsArray = GSON.fromJson(reader, KeyBind[].class);
+      if (keyBindsArray != null) return new ArrayList<>(List.of(keyBindsArray));
+    } catch (IOException e) {
+      LuckyBindings.LOGGER.error("Failed to load dynamic keybinds from config:\n", e);
+    }
+    return new ArrayList<>();
   }
 }

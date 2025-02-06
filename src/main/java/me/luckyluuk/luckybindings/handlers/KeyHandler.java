@@ -50,6 +50,7 @@ public class KeyHandler {
     keyBindings.clear();
     readKeys();
     register();
+    ModConfig.save();
   }
 
   private static void register() {
