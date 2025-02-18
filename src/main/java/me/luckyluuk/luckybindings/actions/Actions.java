@@ -2,20 +2,19 @@ package me.luckyluuk.luckybindings.actions;
 
 import dev.isxander.yacl3.api.NameableEnum;
 import lombok.Getter;
-import me.luckyluuk.luckybindings.LuckyBindings;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 @Getter
 public enum Actions implements NameableEnum {
   ExecuteCommand(new ExecuteCommand("")),
+  FollowBlock(new FollowBlock("")),
   NodHead(new NodHead("")),
   Nothing(new Nothing("")),
   PathHighlight(new PathHighlight("")),
   PrepareChat(new PrepareChat(""));
+
 
   private Action action;
   Actions(Action action) {
