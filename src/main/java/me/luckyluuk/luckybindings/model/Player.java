@@ -1,7 +1,6 @@
 package me.luckyluuk.luckybindings.model;
 
 import lombok.Getter;
-import me.luckyluuk.luckybindings.actions.Action;
 import me.luckyluuk.luckybindings.handlers.Scheduler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -24,8 +23,8 @@ public class Player extends ClientPlayerEntity {
     this.minecraftClient = client;
   }
 
-  public void executeAction(Action action) {
-    action.execute(this);
+  private boolean noPlayer() {
+    return this.minecraftClient.player == null;
   }
 
   /**
@@ -37,29 +36,31 @@ public class Player extends ClientPlayerEntity {
    * @param steps The optional number of steps from left to right or up to down. Default is 4. Works best if it divides 16.
    */
   public void nodHead(boolean agree, int... steps) {
+    if(noPlayer()) return;
     int step = steps.length > 0 ? steps[0] : 4;
-    float centerYaw = this.getHeadYaw();
+    float centerYaw = minecraftClient.player.getHeadYaw();
     float yawIncrement = 16.0f / step;
 
     if (!agree) {
       for (int i = 0; i < step; i++) {
         final int index = i;
-        Scheduler.runLater(() -> setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 3000L / (step * 4L));
-        Scheduler.runLater(() -> setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 3000L / (step * 4L));
+        Scheduler.runLater(() -> minecraftClient.player.setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 3000L / (step * 4L));
+        Scheduler.runLater(() -> minecraftClient.player.setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 3000L / (step * 4L));
       }
-      Scheduler.runLater(() -> setHeadYaw(centerYaw), 3000L);
+      Scheduler.runLater(() -> minecraftClient.player.setHeadYaw(centerYaw), 3000L);
     } else {
       setPitch(0);
       for (int i = 0; i < step; i++) {
-        Scheduler.runLater(() -> setPitch(-15), i * 3000L / (step * 4L));
-        Scheduler.runLater(() -> setPitch(15), (i + step) * 3000L / (step * 4L));
+        Scheduler.runLater(() -> minecraftClient.player.setPitch(-15), i * 3000L / (step * 4L));
+        Scheduler.runLater(() -> minecraftClient.player.setPitch(15), (i + step) * 3000L / (step * 4L));
       }
-      Scheduler.runLater(() -> setPitch(0), 3000L);
+      Scheduler.runLater(() -> minecraftClient.player.setPitch(0), 3000L);
     }
   }
 
   public void sendMessage(String message) {
-    sendMessage(Text.literal(message), false);
+    if(noPlayer()) return;
+    minecraftClient.player.sendMessage(Text.literal(message), false);
   }
 
   public void sendCommand(String command) {
@@ -67,8 +68,9 @@ public class Player extends ClientPlayerEntity {
     this.networkHandler.sendCommand(command);
   }
 
-  public void lookAtYaw(BlockPos targetPos) {
-    BlockPos playerPos = this.getBlockPos();
+  public void lookAtYaw(@Nullable BlockPos targetPos) {
+    if(targetPos == null || noPlayer()) return;
+    BlockPos playerPos = minecraftClient.player.getBlockPos();
     double deltaX = targetPos.getX() - playerPos.getX();
     double deltaZ = targetPos.getZ() - playerPos.getZ();
 
@@ -79,11 +81,12 @@ public class Player extends ClientPlayerEntity {
     double yaw = Math.toDegrees(angle) - 90; // Subtract 90 to adjust for Minecraft's yaw convention
 
     // Set the player's yaw
-    this.setHeadYaw((float) yaw);
+    minecraftClient.player.setHeadYaw((float) yaw);
   }
 
-  public void lookAtPitch(BlockPos targetPos) {
-    BlockPos playerPos = this.getBlockPos();
+  public void lookAtPitch(@Nullable BlockPos targetPos) {
+    if(targetPos == null || noPlayer()) return;
+    BlockPos playerPos = minecraftClient.player.getBlockPos();
     double deltaY = targetPos.getY() - playerPos.getY();
     double deltaX = targetPos.getX() - playerPos.getX();
     double deltaZ = targetPos.getZ() - playerPos.getZ();
@@ -96,17 +99,18 @@ public class Player extends ClientPlayerEntity {
     double pitch = Math.toDegrees(pitchAngle);
 
     // Set the player's pitch
-    setHeadYaw((float) pitch);
+    minecraftClient.player.setHeadYaw((float) pitch);
   }
 
-  public void lookAt(BlockPos targetPos) {
+  public void lookAt(@Nullable BlockPos targetPos) {
     lookAtYaw(targetPos);
     lookAtPitch(targetPos);
   }
 
-  public void moveTo(BlockPos targetPos, boolean... sprint) {
-    this.setSprinting(sprint.length > 0 && sprint[0]);
-    this.move(MovementType.SELF, new Vec3d(targetPos.getX(), targetPos.getY(), targetPos.getZ()));
+  public void moveTo(@Nullable BlockPos targetPos, boolean... sprint) {
+    if(targetPos == null || noPlayer()) return;
+    minecraftClient.player.setSprinting(sprint.length > 0 && sprint[0]);
+    minecraftClient.player.move(MovementType.SELF, new Vec3d(targetPos.getX(), targetPos.getY(), targetPos.getZ()));
   }
 
   /**

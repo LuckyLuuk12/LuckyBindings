@@ -3,6 +3,7 @@ package me.luckyluuk.luckybindings.actions;
 import me.luckyluuk.luckybindings.handlers.Scheduler;
 import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.block.Block;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -39,9 +40,7 @@ public class FollowBlock extends Action {
   public void execute(@Nullable Player p) {
     if (p == null || block == null) return;
     p.sendMessage("Following Block: " + block.getTranslationKey());
-    BlockPos targetPos = findClosestBlock(p);
-    p.sendMessage("Target Block: " + targetPos + " Your Position: " + p.getBlockPos());
-    if(targetPos == null) return;
+
     isActivated = !isActivated;
     final ScheduledFuture<?>[] future = new ScheduledFuture<?>[1];
     future[0] = Scheduler.runRepeatedly(() -> {
@@ -50,9 +49,14 @@ public class FollowBlock extends Action {
         p.sendMessage("Stopped following block.");
         return;
       }
-      p.sendMessage("Following Block: " + block.getTranslationKey());
-      p.lookAtYaw(targetPos);
-      p.moveTo(targetPos, sprint);
+      Player player = Player.from(p.getMinecraftClient().player);
+      if(player == null) return;
+      BlockPos targetPos = findClosestBlock(player);
+      player.sendMessage("Target Block: " + targetPos + " Your Position: " + player.getBlockPos());
+      if(targetPos == null) return;
+      player.sendMessage("Following Block: " + block.getTranslationKey());
+      player.lookAtYaw(targetPos);
+      player.moveTo(targetPos, sprint);
     }, 20L);
   }
 
