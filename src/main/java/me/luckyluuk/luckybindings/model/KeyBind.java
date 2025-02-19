@@ -20,7 +20,7 @@ public class KeyBind {
   private boolean enabled;
 
   public KeyBind(String key, Actions action, String description, boolean enabled, String... args) {
-    this.key = key.startsWith("key.luckybindings.") ? key : "key.luckybindings." + key;
+    this.key = key;
     this.actions = action;
     this.args = args;
     this.description = description;

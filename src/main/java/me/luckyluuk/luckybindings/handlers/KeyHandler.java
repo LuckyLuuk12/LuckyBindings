@@ -30,9 +30,9 @@ public class KeyHandler {
       String key = keyBind.getKey();
       try {
         KeyBinding keyBinding = new KeyBinding(
-          key,
+          "key.luckybindings." +key,
           InputUtil.Type.KEYSYM,
-          getGLFWKey(key.substring(key.lastIndexOf(".") + 1)),
+          getGLFWKey(key),
           "category.luckybindings"
         );
         keyBindings.add(keyBinding);
