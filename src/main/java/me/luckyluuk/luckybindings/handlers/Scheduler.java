@@ -2,19 +2,20 @@ package me.luckyluuk.luckybindings.handlers;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Scheduler {
   private static final int availableProcessors = Runtime.getRuntime().availableProcessors();
-  private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(availableProcessors);
+  private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(availableProcessors / 2);
 
   /**
    * Run a task after a delay.
    * @param task The task to run
    * @param delay The delay in milliseconds before the task is run
    */
-  public static void runLater(Runnable task, long delay) {
-    scheduler.schedule(task, delay, TimeUnit.MILLISECONDS);
+  public static ScheduledFuture<?> runLater(Runnable task, long delay) {
+    return scheduler.schedule(task, delay, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -23,7 +24,7 @@ public class Scheduler {
    * @param period The delay between each run in milliseconds
    * @param initialDelay The optional initial delay in milliseconds before the first run, default is 20 milliseconds
    */
-  public static void runRepeatedly(Runnable task, long period, long... initialDelay) {
-    scheduler.scheduleAtFixedRate(task, initialDelay.length > 0 ? initialDelay[0] : 20, period, TimeUnit.MILLISECONDS);
+  public static ScheduledFuture<?> runRepeatedly(Runnable task, long period, long... initialDelay) {
+    return scheduler.scheduleAtFixedRate(task, initialDelay.length > 0 ? initialDelay[0] : 20, period, TimeUnit.MILLISECONDS);
   }
 }

@@ -79,7 +79,7 @@ public class Player extends ClientPlayerEntity {
     double yaw = Math.toDegrees(angle) - 90; // Subtract 90 to adjust for Minecraft's yaw convention
 
     // Set the player's yaw
-    setYaw((float) yaw);
+    this.setHeadYaw((float) yaw);
   }
 
   public void lookAtPitch(BlockPos targetPos) {
@@ -96,7 +96,7 @@ public class Player extends ClientPlayerEntity {
     double pitch = Math.toDegrees(pitchAngle);
 
     // Set the player's pitch
-    setPitch((float) pitch);
+    setHeadYaw((float) pitch);
   }
 
   public void lookAt(BlockPos targetPos) {
@@ -106,7 +106,7 @@ public class Player extends ClientPlayerEntity {
 
   public void moveTo(BlockPos targetPos, boolean... sprint) {
     this.setSprinting(sprint.length > 0 && sprint[0]);
-    this.move(MovementType.PLAYER, new Vec3d(targetPos.getX(), targetPos.getY(), targetPos.getZ()));
+    this.move(MovementType.SELF, new Vec3d(targetPos.getX(), targetPos.getY(), targetPos.getZ()));
   }
 
   /**

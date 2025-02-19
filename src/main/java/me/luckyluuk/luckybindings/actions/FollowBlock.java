@@ -1,5 +1,6 @@
 package me.luckyluuk.luckybindings.actions;
 
+import me.luckyluuk.luckybindings.handlers.Scheduler;
 import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.block.Block;
 import net.minecraft.registry.Registries;
@@ -11,6 +12,9 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 
 public class FollowBlock extends Action {
@@ -39,10 +43,17 @@ public class FollowBlock extends Action {
     p.sendMessage("Target Block: " + targetPos + " Your Position: " + p.getBlockPos());
     if(targetPos == null) return;
     isActivated = !isActivated;
-    while(isActivated) {
+    final ScheduledFuture<?>[] future = new ScheduledFuture<?>[1];
+    future[0] = Scheduler.runRepeatedly(() -> {
+      if (!isActivated) {
+        if(future[0] != null) future[0].cancel(false);
+        p.sendMessage("Stopped following block.");
+        return;
+      }
+      p.sendMessage("Following Block: " + block.getTranslationKey());
       p.lookAtYaw(targetPos);
       p.moveTo(targetPos, sprint);
-    }
+    }, 20L);
   }
 
   @Override
