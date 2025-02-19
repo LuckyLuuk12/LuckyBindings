@@ -44,22 +44,22 @@ public class Player extends ClientPlayerEntity {
     if (!agree) {
       for (int i = 0; i < step; i++) {
         final int index = i;
-        Scheduler.runLater(() -> this.setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 3000L / (step * 4L));
-        Scheduler.runLater(() -> this.setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 3000L / (step * 4L));
+        Scheduler.runLater(() -> setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 3000L / (step * 4L));
+        Scheduler.runLater(() -> setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 3000L / (step * 4L));
       }
-      Scheduler.runLater(() -> this.setHeadYaw(centerYaw), 3000L);
+      Scheduler.runLater(() -> setHeadYaw(centerYaw), 3000L);
     } else {
-      this.setPitch(0);
+      setPitch(0);
       for (int i = 0; i < step; i++) {
-        Scheduler.runLater(() -> this.setPitch(-15), i * 3000L / (step * 4L));
-        Scheduler.runLater(() -> this.setPitch(15), (i + step) * 3000L / (step * 4L));
+        Scheduler.runLater(() -> setPitch(-15), i * 3000L / (step * 4L));
+        Scheduler.runLater(() -> setPitch(15), (i + step) * 3000L / (step * 4L));
       }
-      Scheduler.runLater(() -> this.setPitch(0), 3000L);
+      Scheduler.runLater(() -> setPitch(0), 3000L);
     }
   }
 
   public void sendMessage(String message) {
-    this.sendMessage(Text.literal(message), false);
+    sendMessage(Text.literal(message), false);
   }
 
   public void sendCommand(String command) {

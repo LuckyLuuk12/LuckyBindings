@@ -17,6 +17,7 @@ public class FollowBlock extends Action {
   private Block block;
   private int maxSearchDistance = 3;
   private boolean sprint = false;
+  static private boolean isActivated = false;
   public FollowBlock(String... args) {
     super("follow_block", """
     Using this action will cause the player to start following the specified block.
@@ -37,8 +38,11 @@ public class FollowBlock extends Action {
     BlockPos targetPos = findClosestBlock(p);
     p.sendMessage("Target Block: " + targetPos + " Your Position: " + p.getBlockPos());
     if(targetPos == null) return;
-    p.lookAtYaw(targetPos);
-    p.moveTo(targetPos, sprint);
+    isActivated = !isActivated;
+    while(isActivated) {
+      p.lookAtYaw(targetPos);
+      p.moveTo(targetPos, sprint);
+    }
   }
 
   @Override
