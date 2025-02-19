@@ -3,7 +3,6 @@ package me.luckyluuk.luckybindings.handlers;
 import me.luckyluuk.luckybindings.LuckyBindings;
 import me.luckyluuk.luckybindings.config.ModConfig;
 import me.luckyluuk.luckybindings.model.KeyBind;
-import me.luckyluuk.luckybindings.model.Player;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
@@ -14,6 +13,8 @@ import java.util.List;
 
 public class KeyHandler {
   protected static final List<KeyBinding> keyBindings = new ArrayList<>();
+  private static final String KEY_PREFIX = "key.luckybindings.";
+  private static final String CATEGORY = "category.luckybindings";
 
   public static void initialize() {
     readKeys();
@@ -30,10 +31,10 @@ public class KeyHandler {
       String key = keyBind.getKey();
       try {
         KeyBinding keyBinding = new KeyBinding(
-          "key.luckybindings." +key,
+          KEY_PREFIX +key,
           InputUtil.Type.KEYSYM,
           getGLFWKey(key),
-          "category.luckybindings"
+          CATEGORY
         );
         keyBindings.add(keyBinding);
       } catch (Exception e) {
@@ -57,24 +58,25 @@ public class KeyHandler {
     ClientTickEvents.END_CLIENT_TICK.register(client -> {
       for (KeyBinding keyBinding : keyBindings) {
         if (!keyBinding.wasPressed()) continue;
-        executeAction(client, keyBinding.getTranslationKey());
+        executeAction(keyBinding.getTranslationKey());
       }
     });
   }
 
-  private static void executeAction(MinecraftClient client, String key) {
+  private static void executeAction(String key) {
     KeyBind keyBind = ModConfig.dynamicKeyBinds.stream()
-      .filter(kb -> kb.getKey().equals(key))
+      .filter(kb -> (KEY_PREFIX+kb.getKey()).equals(key))
       .findFirst()
       .orElse(null);
     if (keyBind == null) { // Prefer dynamic key binds over predefined key binds
       keyBind = ModConfig.predefinedKeyBinds.stream()
-        .filter(kb -> kb.getKey().equals(key))
+        .filter(kb -> (KEY_PREFIX+kb.getKey()).equals(key))
         .findFirst()
         .orElse(null);
     }
+    LuckyBindings.LOGGER.info("Key bind: {}", keyBind);
     if (keyBind == null) return;
     keyBind.setArgs(String.join(";", keyBind.getArgs()));
-    keyBind.getActions().getAction().execute(Player.from(client.player));
+    keyBind.getActions().getAction().execute();
   }
 }

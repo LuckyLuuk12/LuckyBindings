@@ -1,6 +1,9 @@
 package me.luckyluuk.luckybindings.actions;
 
-import me.luckyluuk.luckybindings.model.Player;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+
+import static me.luckyluuk.luckybindings.model.PlayerUtil.nodHead;
 
 public class NodHead extends Action {
   private boolean agree;
@@ -21,9 +24,10 @@ public class NodHead extends Action {
   }
 
   @Override
-  public void execute(Player p) {
+  public void execute() {
+    ClientPlayerEntity p = MinecraftClient.getInstance().player;
     if (p == null) return;
-    p.nodHead(agree);
+    nodHead(agree);
   }
 
   @Override

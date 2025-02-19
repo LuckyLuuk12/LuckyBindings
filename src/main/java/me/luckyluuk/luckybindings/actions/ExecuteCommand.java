@@ -1,9 +1,9 @@
 package me.luckyluuk.luckybindings.actions;
 
-import me.luckyluuk.luckybindings.model.Player;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
 
@@ -42,12 +42,13 @@ public class ExecuteCommand extends Action {
   }
 
   @Override
-  public void execute(Player p) {
+  public void execute() {
+    ClientPlayerEntity p = MinecraftClient.getInstance().player;
     if (p == null) return;
     p.networkHandler.sendCommand(parse(command, p));
   }
 
-  static public String parse(String command, Player p) {
+  static public String parse(String command, ClientPlayerEntity p) {
     DecimalFormat df = new DecimalFormat("#.##");
     if(command.contains("%main_hand%") && p.getMainHandStack().getCustomName()  != null) {
       command = command.replaceAll("%main_hand%", p.getMainHandStack().getCustomName().getString());

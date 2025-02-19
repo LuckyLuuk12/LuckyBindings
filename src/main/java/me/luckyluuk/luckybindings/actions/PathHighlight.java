@@ -1,7 +1,7 @@
 package me.luckyluuk.luckybindings.actions;
 
-import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.pathing.*;
 import net.minecraft.entity.mob.PathAwareEntity;
@@ -11,6 +11,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import java.util.stream.Stream;
+
+import static me.luckyluuk.luckybindings.model.PlayerUtil.sendMessage;
 
 public class PathHighlight extends Action {
   private BlockPos target;
@@ -40,17 +42,17 @@ public class PathHighlight extends Action {
 
   /**
    * Spawns particles to highlight the path to the target block.
-   * @param p The player to spawn the particles for.
    */
   @Override
-  public void execute(Player p) {
+  public void execute() {
+    ClientPlayerEntity p = MinecraftClient.getInstance().player;
     if (p == null || target == null) return;
     // If range is specified, check if the player is within range
     if (range != null) {
       double distance = p.getPos().distanceTo(new Vec3d(target.getX(), target.getY(), target.getZ()));
       if (distance > range) return;
     }
-    p.sendMessage("Highlighting path to: " + target.getX() + ", " + target.getY() + ", " + target.getZ());
+    sendMessage("Highlighting path to: " + target.getX() + ", " + target.getY() + ", " + target.getZ());
     World world = p.getWorld();
     PathAwareEntity tempEntity = new PathAwareEntity(EntityType.ZOMBIE, world) {}; // Dummy mob
     tempEntity.setPosition(p.getX(), p.getY(), p.getZ());

@@ -1,7 +1,5 @@
 package me.luckyluuk.luckybindings.actions;
 
-import me.luckyluuk.luckybindings.model.Player;
-
 public class Nothing extends Action {
 
   public Nothing(String... ignored) {
@@ -9,7 +7,7 @@ public class Nothing extends Action {
   }
 
   @Override
-  public void execute(Player p) {
+  public void execute() {
     // Do nothing
   }
 

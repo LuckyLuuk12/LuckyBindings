@@ -15,7 +15,7 @@ public class Scheduler {
    * @param delay The delay in milliseconds before the task is run
    */
   public static ScheduledFuture<?> runLater(Runnable task, long delay) {
-    return scheduler.schedule(task, delay, TimeUnit.MILLISECONDS);
+    return scheduler.schedule(task, delay*50L, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -25,6 +25,6 @@ public class Scheduler {
    * @param initialDelay The optional initial delay in milliseconds before the first run, default is 20 milliseconds
    */
   public static ScheduledFuture<?> runRepeatedly(Runnable task, long period, long... initialDelay) {
-    return scheduler.scheduleAtFixedRate(task, initialDelay.length > 0 ? initialDelay[0] : 20, period, TimeUnit.MILLISECONDS);
+    return scheduler.scheduleAtFixedRate(task, (initialDelay.length > 0 ? initialDelay[0] : 20)*50L, period * 50L, TimeUnit.MILLISECONDS);
   }
 }

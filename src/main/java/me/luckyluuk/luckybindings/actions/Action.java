@@ -4,8 +4,6 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import me.luckyluuk.luckybindings.model.Player;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents an action that can be executed by a player.
@@ -20,7 +18,7 @@ abstract public class Action {
   private final String TYPE;
   private final String DESC;
 
-  public abstract void execute(@Nullable Player p);
+  public abstract void execute();
 
   public abstract void setArgs(String... args);
 }

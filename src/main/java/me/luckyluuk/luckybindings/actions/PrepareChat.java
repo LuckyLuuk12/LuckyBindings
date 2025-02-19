@@ -1,8 +1,8 @@
 package me.luckyluuk.luckybindings.actions;
 
-import me.luckyluuk.luckybindings.model.Player;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.network.ClientPlayerEntity;
 
 /**
  * Attempts to open the chat for a player and prepare some text
@@ -27,7 +27,8 @@ public class PrepareChat extends Action {
   }
 
   @Override
-  public void execute(Player p) {
+  public void execute() {
+    ClientPlayerEntity p = MinecraftClient.getInstance().player;
     if (p == null) return;
     MinecraftClient.getInstance().setScreen(new ChatScreen(this.text));
   }
