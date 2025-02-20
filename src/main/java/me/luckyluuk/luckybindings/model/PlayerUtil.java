@@ -41,17 +41,17 @@ public class PlayerUtil {
     if (!agree) {
       for (int i = 0; i < step; i++) {
         final int index = i;
-        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 600L / (step * 4L));
-        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 600L / (step * 4L));
+        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 60L / (step * 4L));
+        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 60L / (step * 4L));
       }
-      Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw), 3000L);
+      Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw), 60L);
     } else {
       getPlayer().setPitch(0);
       for (int i = 0; i < step; i++) {
-        Scheduler.runLater(() -> getPlayer().setPitch(-15), i * 600L / (step * 4L));
-        Scheduler.runLater(() -> getPlayer().setPitch(15), (i + step) * 600L / (step * 4L));
+        Scheduler.runLater(() -> getPlayer().setPitch(-15), i * 60L / (step * 4L));
+        Scheduler.runLater(() -> getPlayer().setPitch(15), (i + step) * 60L / (step * 4L));
       }
-      Scheduler.runLater(() -> getPlayer().setPitch(0), 600L);
+      Scheduler.runLater(() -> getPlayer().setPitch(0), 60L);
     }
   }
 
@@ -66,7 +66,7 @@ public class PlayerUtil {
   }
 
   static public void lookAtYaw(@Nullable BlockPos targetPos) {
-    if(targetPos == null || noPlayer()) return;
+    if (targetPos == null || noPlayer()) return;
     BlockPos playerPos = getPlayer().getBlockPos();
     double deltaX = targetPos.getX() - playerPos.getX();
     double deltaZ = targetPos.getZ() - playerPos.getZ();
@@ -75,10 +75,24 @@ public class PlayerUtil {
     double angle = Math.atan2(deltaZ, deltaX);
 
     // Convert the angle to degrees
-    double yaw = Math.toDegrees(angle) - 90; // Subtract 90 to adjust for Minecraft's yaw convention
+    double newYaw = Math.toDegrees(angle) - 90; // Subtract 90 to adjust for Minecraft's yaw convention
+
+    // Get the current body yaw
+    float currentBodyYaw = getPlayer().getBodyYaw();
+
+    // Normalize the yaw values to ensure smooth interpolation
+    newYaw = (newYaw + 360) % 360;
+    currentBodyYaw = (currentBodyYaw + 360) % 360;
+
+    // Interpolate between the current body yaw and the new head yaw
+    float interpolatedBodyYaw = currentBodyYaw + 0.5f * (float) (newYaw - currentBodyYaw);
+
+    // Normalize the interpolated body yaw
+    interpolatedBodyYaw = (interpolatedBodyYaw + 360) % 360;
 
     // Set the player's yaw
-    getPlayer().setHeadYaw((float) yaw);
+    getPlayer().setHeadYaw((float) newYaw);
+    getPlayer().setBodyYaw(interpolatedBodyYaw);
   }
 
   static public void lookAtPitch(@Nullable BlockPos targetPos) {
