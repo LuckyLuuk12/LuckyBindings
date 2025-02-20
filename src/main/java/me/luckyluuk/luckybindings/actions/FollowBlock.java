@@ -66,6 +66,7 @@ public class FollowBlock extends Action {
             return;
           }
           sendMessage(p.getBlockPos().getX() + ", " + p.getBlockPos().getY() + ", " + p.getBlockPos().getZ() + " > " + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ() + " | " + getPlayer().clientWorld.getBlockState(targetPos).getBlock().getTranslationKey());
+          // TODO: these 2 calls set values possibly async and cause client crashes
           lookAtYaw(targetPos);
           moveTo(targetPos, sprint);
         }
