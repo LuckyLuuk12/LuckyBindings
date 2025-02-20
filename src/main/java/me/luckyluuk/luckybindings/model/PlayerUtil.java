@@ -4,12 +4,18 @@ import lombok.Getter;
 import me.luckyluuk.luckybindings.handlers.Scheduler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.EntityView;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.function.Predicate;
 
 @Getter
 public class PlayerUtil {
@@ -37,17 +43,17 @@ public class PlayerUtil {
     if (!agree) {
       for (int i = 0; i < step; i++) {
         final int index = i;
-        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 3000L / (step * 4L));
-        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 3000L / (step * 4L));
+        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 600L / (step * 4L));
+        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 600L / (step * 4L));
       }
       Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw), 3000L);
     } else {
       getPlayer().setPitch(0);
       for (int i = 0; i < step; i++) {
-        Scheduler.runLater(() -> getPlayer().setPitch(-15), i * 3000L / (step * 4L));
-        Scheduler.runLater(() -> getPlayer().setPitch(15), (i + step) * 3000L / (step * 4L));
+        Scheduler.runLater(() -> getPlayer().setPitch(-15), i * 600L / (step * 4L));
+        Scheduler.runLater(() -> getPlayer().setPitch(15), (i + step) * 600L / (step * 4L));
       }
-      Scheduler.runLater(() -> getPlayer().setPitch(0), 3000L);
+      Scheduler.runLater(() -> getPlayer().setPitch(0), 600L);
     }
   }
 
@@ -75,8 +81,6 @@ public class PlayerUtil {
 
     // Set the player's yaw
     getPlayer().setHeadYaw((float) yaw);
-    getPlayer().setBodyYaw((float) yaw);
-    getPlayer().setYaw((float) yaw);
   }
 
   static public void lookAtPitch(@Nullable BlockPos targetPos) {
@@ -145,6 +149,17 @@ public class PlayerUtil {
     }
   }
 
+  static public void lookRight() {
+    if(noPlayer()) return;
+    Direction direction = getPlayer().getHorizontalFacing();
+    switch (direction) {
+      case NORTH -> lookAt(Direction.EAST);
+      case SOUTH -> lookAt(Direction.WEST);
+      case WEST -> lookAt(Direction.NORTH);
+      case EAST -> lookAt(Direction.SOUTH);
+    }
+  }
+
   static public void moveTo(@Nullable BlockPos targetPos, boolean... sprint) {
     if (targetPos == null || noPlayer()) return;
     getPlayer().setSprinting(sprint.length > 0 && sprint[0]);
@@ -165,4 +180,26 @@ public class PlayerUtil {
     getPlayer().move(MovementType.SELF, movementVector);
   }
 
+  static public ArrayList<PlayerEntity> getPlayersInRange(double range) {
+    if(noPlayer()) return new ArrayList<>();
+    return new ArrayList<>(getPlayer().getWorld().getEntitiesByClass(PlayerEntity.class, getPlayer().getBoundingBox().expand(range), player -> player != getPlayer()));
+  }
+
+  @Nullable
+  static public PlayerEntity getClosestPlayer(double maxDistance) {
+    if(noPlayer()) return null;
+    double d = -1.0;
+    PlayerEntity playerEntity = null;
+    EntityView entityView = getPlayer().getWorld();
+    for(PlayerEntity playerEntity2 : entityView.getPlayers()) {
+      if(playerEntity2 == getPlayer()) continue;
+      double e = playerEntity2.squaredDistanceTo(getPlayer());
+      if((maxDistance < 0.0 || e < maxDistance * maxDistance) && (d == -1.0 || e < d)) {
+        d = e;
+        playerEntity = playerEntity2;
+      }
+    }
+
+    return playerEntity;
+  }
 }

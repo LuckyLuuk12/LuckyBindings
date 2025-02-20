@@ -6,8 +6,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Scheduler {
-  private static final int availableProcessors = Runtime.getRuntime().availableProcessors();
-  private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(availableProcessors / 2);
+//  private static final int availableProcessors = Runtime.getRuntime().availableProcessors();
+  private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1); //availableProcessors / 2);
 
   /**
    * Run a task after a delay.

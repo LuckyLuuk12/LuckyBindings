@@ -21,19 +21,24 @@ import static me.luckyluuk.luckybindings.model.PlayerUtil.*;
 
 public class FollowBlock extends Action {
   private Block block;
-  private int maxSearchDistance = 3;
   private boolean sprint = false;
+  private int maxSearchDistance = 3;
+  private int stopWhenNearbyDistance = 32;
+  private boolean searchRotation = true; // true = right, false = left
   static private boolean isActivated = false;
   public FollowBlock(String... args) {
     super("follow_block", """
     WARNING: THIS MIGHT BE CONSIDERED AS CHEATING AND CAN GET YOU BANNED ON SOME SERVERS.
+    
     Using this action will cause the player to start following the specified block.
-    This means it will attempt to find the block in the direction the player is looking
-    limited by the max search distance. This direction will be limited to the horizontal
-    plane and to the North, South, East, or West directions.
-    From the player's current location a square area will be searched for the block.
-    The width and length of the square are determined by the max search distance.
-    If the block is found, the player will start walking towards it.
+    
+    PARAMETERS:
+    - The block to follow (required).
+    - Whether to sprint while following the block (optional, default is false).
+    - The maximum search distance (optional, default is 3).
+    - The distance your player must have from other players before stopping (optional, default is 32).
+       This is to prevent detection by staff or other players.
+    - If no block is found, the player will rotate left or right and continue searching (optional, default is right).
     """);
     setArgs(args);
   }
@@ -44,24 +49,27 @@ public class FollowBlock extends Action {
     if (pl == null || block == null) return;
     isActivated = !isActivated;
     try {
-    final ScheduledFuture<?>[] future = new ScheduledFuture<?>[1];
-    future[0] = Scheduler.runRepeatedly(() -> {
-      if (!isActivated) {
-        if(future[0] != null) future[0].cancel(true);
-        return;
-      }
-      ClientPlayerEntity p = MinecraftClient.getInstance().player;
-      if (p == null) return;
-      BlockPos targetPos = findClosestBlock(p);
-      // If no block is found, rotate left and continue searching
-      if(targetPos == null) {
-        lookLeft();
-        return;
-      }
-      sendMessage(p.getBlockPos().getX() + ", " + p.getBlockPos().getY() + ", " + p.getBlockPos().getZ() + " > " + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ() + " | " + getPlayer().clientWorld.getBlockState(targetPos).getBlock().getTranslationKey());
-      lookAtYaw(targetPos);
-      moveTo(targetPos, sprint);
-    }, 1L);
+      final ScheduledFuture<?>[] future = new ScheduledFuture<?>[1];
+      future[0] = Scheduler.runRepeatedly(() -> {
+        synchronized (this) {
+
+          if (!isActivated) {
+            if (future[0] != null) future[0].cancel(true);
+            return;
+          }
+          ClientPlayerEntity p = MinecraftClient.getInstance().player;
+          if (p == null || getClosestPlayer(stopWhenNearbyDistance) != null) return;
+          BlockPos targetPos = findClosestBlock(p);
+          // If no block is found, rotate left and continue searching
+          if (targetPos == null) {
+            if(searchRotation) lookRight(); else lookLeft();
+            return;
+          }
+          sendMessage(p.getBlockPos().getX() + ", " + p.getBlockPos().getY() + ", " + p.getBlockPos().getZ() + " > " + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ() + " | " + getPlayer().clientWorld.getBlockState(targetPos).getBlock().getTranslationKey());
+          lookAtYaw(targetPos);
+          moveTo(targetPos, sprint);
+        }
+      }, 1L);
     } catch (Exception e) {
       sendMessage("An error occurred, stopping the action...");
       isActivated = false;
@@ -75,6 +83,8 @@ public class FollowBlock extends Action {
     }
     this.sprint = args.length > 1 && Boolean.parseBoolean(args[1]);
     if (args.length > 2) this.maxSearchDistance = Integer.parseInt(args[2]);
+    if (args.length > 3) this.stopWhenNearbyDistance = Integer.parseInt(args[3]);
+    if (args.length > 4) this.searchRotation = "r".equals(args[4].substring(0, 1));
   }
 
   /**
