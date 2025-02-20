@@ -4,7 +4,6 @@ import lombok.Getter;
 import me.luckyluuk.luckybindings.handlers.Scheduler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
@@ -15,7 +14,6 @@ import net.minecraft.world.EntityView;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.function.Predicate;
 
 @Getter
 public class PlayerUtil {
@@ -181,13 +179,13 @@ public class PlayerUtil {
   }
 
   static public ArrayList<PlayerEntity> getPlayersInRange(double range) {
-    if(noPlayer()) return new ArrayList<>();
+    if(noPlayer() || isNoPlayerInRange(range)) return new ArrayList<>();
     return new ArrayList<>(getPlayer().getWorld().getEntitiesByClass(PlayerEntity.class, getPlayer().getBoundingBox().expand(range), player -> player != getPlayer()));
   }
 
   @Nullable
   static public PlayerEntity getClosestPlayer(double maxDistance) {
-    if(noPlayer()) return null;
+    if(noPlayer() || isNoPlayerInRange(maxDistance)) return null;
     double d = -1.0;
     PlayerEntity playerEntity = null;
     EntityView entityView = getPlayer().getWorld();
@@ -201,5 +199,16 @@ public class PlayerUtil {
     }
 
     return playerEntity;
+  }
+  // TODO: Somehow these methods don't detect SPECTATORS, issue lies in the getPlayers() method I think
+  static public boolean isNoPlayerInRange(double range) {
+    if(noPlayer()) return true;
+    EntityView entityView = getPlayer().getWorld();
+    for(PlayerEntity playerEntity2 : entityView.getPlayers()) {
+      if(playerEntity2 == getPlayer()) continue;
+      double e = playerEntity2.squaredDistanceTo(getPlayer());
+      if(range < 0.0 || e < range * range) return false;
+    }
+    return true;
   }
 }
