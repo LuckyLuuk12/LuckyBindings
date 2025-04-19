@@ -50,11 +50,11 @@ public class ExecuteCommand extends Action {
 
   static public String parse(String command, ClientPlayerEntity p) {
     DecimalFormat df = new DecimalFormat("#.##");
-    if(command.contains("%main_hand%") && p.getMainHandStack().getCustomName()  != null) {
-      command = command.replaceAll("%main_hand%", p.getMainHandStack().getCustomName().getString());
+    if(command.contains("%main_hand%") && p.getMainHandStack().getName()  != null) {
+      command = command.replaceAll("%main_hand%", p.getMainHandStack().getName().getString());
     }
-    if(command.contains("%off_hand%") && p.getOffHandStack().getCustomName() != null) {
-      command = command.replaceAll("%off_hand%", p.getOffHandStack().getCustomName().getString());
+    if(command.contains("%off_hand%") && p.getOffHandStack().getName() != null) {
+      command = command.replaceAll("%off_hand%", p.getOffHandStack().getName().getString());
     }
     if(command.contains("%player%")) command = command.replaceAll("%player%", p.getName().getString());
     if(command.contains("%player_display_name%") && p.getDisplayName() != null) command = command.replaceAll("%player_display_name%", p.getDisplayName().getString());
