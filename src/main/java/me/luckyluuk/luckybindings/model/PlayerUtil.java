@@ -14,6 +14,8 @@ import net.minecraft.world.EntityView;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 public class PlayerUtil {
@@ -89,6 +91,12 @@ public class PlayerUtil {
 
     // Normalize the interpolated body yaw
     interpolatedBodyYaw = (interpolatedBodyYaw + 360) % 360;
+
+    // Convert back to [-180, 180] range
+    if (interpolatedBodyYaw > 180) interpolatedBodyYaw -= 360;
+    if (interpolatedBodyYaw < -180) interpolatedBodyYaw += 360;
+    if (newYaw > 180) newYaw -= 360;
+    if (newYaw < -180) newYaw += 360;
 
     // Set the player's yaw
     getPlayer().setHeadYaw((float) newYaw);
@@ -172,25 +180,97 @@ public class PlayerUtil {
     }
   }
 
-  static public void moveTo(@Nullable BlockPos targetPos, boolean... sprint) {
-    if (targetPos == null || noPlayer()) return;
-    getPlayer().setSprinting(sprint.length > 0 && sprint[0]);
+//  static public void moveTo(@Nullable BlockPos targetPos, boolean... sprint) {
+//    if (targetPos == null || noPlayer()) return;
+//    getPlayer().setSprinting(sprint.length > 0 && sprint[0]);
+//
+//    BlockPos playerPos = getPlayer().getBlockPos();
+//    double deltaX = targetPos.getX() - playerPos.getX();
+//    double deltaY = targetPos.getY() - playerPos.getY();
+//    double deltaZ = targetPos.getZ() - playerPos.getZ();
+//
+//    Vec3d movementVector = new Vec3d(deltaX, deltaY, deltaZ);
+//
+//    // Limit the movement vector to a maximum length of 3 blocks
+//    double maxDistance = getPlayer().getMovementSpeed()*3;
+//    if (movementVector.length() > maxDistance) {
+//      movementVector = movementVector.normalize().multiply(maxDistance);
+//    }
+//
+//    getPlayer().move(MovementType.SELF, movementVector);
+//  }
 
-    BlockPos playerPos = getPlayer().getBlockPos();
-    double deltaX = targetPos.getX() - playerPos.getX();
-    double deltaY = targetPos.getY() - playerPos.getY();
-    double deltaZ = targetPos.getZ() - playerPos.getZ();
-
-    Vec3d movementVector = new Vec3d(deltaX, deltaY, deltaZ);
-
-    // Limit the movement vector to a maximum length of 3 blocks
-    double maxDistance = getPlayer().getMovementSpeed()*3;
-    if (movementVector.length() > maxDistance) {
-      movementVector = movementVector.normalize().multiply(maxDistance);
+  static public CompletableFuture<Boolean> moveTo(@Nullable BlockPos targetPos, int maxSteps, boolean... sprint) {
+    CompletableFuture<Boolean> future = new CompletableFuture<>();
+    if (targetPos == null || noPlayer()) {
+      future.completeExceptionally(new IllegalArgumentException("Target position is null or player is unavailable."));
+      return future;
     }
 
-    getPlayer().move(MovementType.SELF, movementVector);
+    ClientPlayerEntity player = getPlayer();
+    player.setSprinting(sprint.length > 0 && sprint[0]);
+
+    AtomicInteger steps = new AtomicInteger(0);
+
+    Scheduler.runRepeatedly(() -> {
+      if (steps.incrementAndGet() > maxSteps) {
+        player.setVelocity(Vec3d.ZERO); // stop movement
+        future.completeExceptionally(new IllegalStateException("Max steps exceeded."));
+        return;
+      }
+
+      Vec3d playerPos = player.getPos();
+      Vec3d targetVec = new Vec3d(targetPos.getX() + 0.5, playerPos.y, targetPos.getZ() + 0.5);
+      Vec3d direction = targetVec.subtract(playerPos);
+
+      if (direction.lengthSquared() < 0.1) {
+        player.setVelocity(Vec3d.ZERO); // stop movement
+        future.complete(true);
+        return;
+      }
+
+      direction = direction.normalize();
+
+      // Optional: face target
+//      faceTarget(player, targetPos);
+
+      // Set velocity toward the target
+      double speed = player.getMovementSpeed();
+      if (player.isSprinting()) {
+        speed *= 1.3;
+      }
+      Vec3d velocity = direction.multiply(speed * 2.5); // tune as needed
+      player.setVelocity(velocity);
+      player.velocityModified = true;
+    }, 1L);
+
+    return future;
   }
+
+
+//  static public void moveTo(@Nullable BlockPos targetPos, boolean... sprint) {
+//    if (targetPos == null || noPlayer()) return;
+//
+//    ClientPlayerEntity player = getPlayer();
+//    player.setSprinting(sprint.length > 0 && sprint[0]);
+//
+//    // Calculate the direction vector to the target position
+//    Vec3d playerPos = player.getPos();
+//    Vec3d targetVec = new Vec3d(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5); // Center of the block
+//    Vec3d direction = targetVec.subtract(playerPos).normalize();
+//
+//    // Calculate the movement speed (walking or sprinting)
+//    double speed = player.getMovementSpeed();
+//    if (player.isSprinting()) {
+//      speed *= 1.3; // Sprinting multiplier
+//    }
+//
+//    // Calculate the movement vector for this tick
+//    Vec3d movementVector = direction.multiply(speed / 20.0); // Divide by 20 ticks per second
+//
+//    // Apply the movement vector using the game's physics
+//    player.move(MovementType.SELF, movementVector);
+//  }
 
   static public ArrayList<PlayerEntity> getPlayersInRange(double range) {
     if(noPlayer() || isNoPlayerInRange(range)) return new ArrayList<>();
