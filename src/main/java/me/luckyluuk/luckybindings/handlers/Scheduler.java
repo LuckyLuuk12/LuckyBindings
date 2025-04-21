@@ -20,11 +20,25 @@ public class Scheduler {
 
   /**
    * Run a task repeatedly with a fixed delay and an optional initial delay.
-   * @param task The task to run
+   * The task receives its own `ScheduledFuture<?>` as an argument, allowing it to manage itself.
+   * @param task The task to run, which accepts its own `ScheduledFuture<?>` as an argument
    * @param period The delay between each run in milliseconds
    * @param initialDelay The optional initial delay in milliseconds before the first run, default is 20 milliseconds
    */
-  public static ScheduledFuture<?> runRepeatedly(Runnable task, long period, long... initialDelay) {
-    return scheduler.scheduleAtFixedRate(task, (initialDelay.length > 0 ? initialDelay[0] : 20)*50L, period * 50L, TimeUnit.MILLISECONDS);
+  public static ScheduledFuture<?> runRepeatedly(SelfManagingTask task, long period, long... initialDelay) {
+    ScheduledFuture<?>[] futureHolder = new ScheduledFuture<?>[1];
+    futureHolder[0] = scheduler.scheduleAtFixedRate(() -> task.run(futureHolder[0]),
+      (initialDelay.length > 0 ? initialDelay[0] : 20) * 50L,
+      period * 50L,
+      TimeUnit.MILLISECONDS);
+    return futureHolder[0];
+  }
+
+  /**
+   * Functional interface for tasks that can manage their own `ScheduledFuture<?>`.
+   */
+  @FunctionalInterface
+  public interface SelfManagingTask {
+    void run(ScheduledFuture<?> self);
   }
 }

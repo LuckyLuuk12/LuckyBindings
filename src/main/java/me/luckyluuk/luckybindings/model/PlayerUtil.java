@@ -93,10 +93,10 @@ public class PlayerUtil {
     interpolatedBodyYaw = (interpolatedBodyYaw + 360) % 360;
 
     // Convert back to [-180, 180] range
-    if (interpolatedBodyYaw > 180) interpolatedBodyYaw -= 360;
-    if (interpolatedBodyYaw < -180) interpolatedBodyYaw += 360;
-    if (newYaw > 180) newYaw -= 360;
-    if (newYaw < -180) newYaw += 360;
+//    if (interpolatedBodyYaw > 180) interpolatedBodyYaw -= 360;
+//    if (interpolatedBodyYaw < -180) interpolatedBodyYaw += 360;
+//    if (newYaw > 180) newYaw -= 360;
+//    if (newYaw < -180) newYaw += 360;
 
     // Set the player's yaw
     getPlayer().setHeadYaw((float) newYaw);
@@ -212,10 +212,11 @@ public class PlayerUtil {
 
     AtomicInteger steps = new AtomicInteger(0);
 
-    Scheduler.runRepeatedly(() -> {
+    Scheduler.runRepeatedly(task -> {
       if (steps.incrementAndGet() > maxSteps) {
         player.setVelocity(Vec3d.ZERO); // stop movement
         future.completeExceptionally(new IllegalStateException("Max steps exceeded."));
+        task.cancel(true);
         return;
       }
 
@@ -223,9 +224,10 @@ public class PlayerUtil {
       Vec3d targetVec = new Vec3d(targetPos.getX() + 0.5, playerPos.y, targetPos.getZ() + 0.5);
       Vec3d direction = targetVec.subtract(playerPos);
 
-      if (direction.lengthSquared() < 0.1) {
+      if (direction.lengthSquared() < 0.25) { // close enough to target
         player.setVelocity(Vec3d.ZERO); // stop movement
         future.complete(true);
+        task.cancel(true);
         return;
       }
 
@@ -241,7 +243,7 @@ public class PlayerUtil {
       }
       Vec3d velocity = direction.multiply(speed * 2.5); // tune as needed
       player.setVelocity(velocity);
-      player.velocityModified = true;
+//      player.velocityModified = true;
     }, 1L);
 
     return future;
