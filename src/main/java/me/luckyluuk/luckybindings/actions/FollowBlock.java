@@ -1,7 +1,7 @@
 package me.luckyluuk.luckybindings.actions;
 
 import me.luckyluuk.luckybindings.handlers.Scheduler;
-import me.luckyluuk.luckybindings.model.CarloPathFinder;
+import me.luckyluuk.luckybindings.model.PathEdgeFinder;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -9,7 +9,6 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -21,7 +20,7 @@ public class FollowBlock extends Action {
   private boolean sprint = false;
   private int maxSearchDistance = 3;
   private int stopWhenNearbyDistance = 32;
-  private int simulationRounds = 300;
+  private int maxGaps = 0;
   private boolean isActivated = false;
   private Queue<BlockPos> path = new LinkedList<>();
 
@@ -35,7 +34,7 @@ public class FollowBlock extends Action {
         - The block to follow (required).
         - Whether to sprint while following the block (optional, default is false).
         - The maximum search distance (optional, default is 3).
-        - The number of simulation rounds to run (optional, default is 300).
+        - The maximum gap size allowed in the path (optional, default is 0).
         - The distance your player must have from other players before stopping (optional, default is 32).
            This is to prevent detection by staff or other players.
         """);
@@ -53,8 +52,8 @@ public class FollowBlock extends Action {
       return;
     }
 
-    CarloPathFinder cpf = new CarloPathFinder(player.getWorld(), player, block, maxSearchDistance, simulationRounds);
-    path = new LinkedList<>(cpf.findPath());
+    PathEdgeFinder pef = new PathEdgeFinder(player.getWorld(), player, block, maxSearchDistance, maxGaps);
+    path = new LinkedList<>(pef.findPath());
     Queue<BlockPos> runningPath = new LinkedList<>(path);
     if (path.isEmpty()) {
       player.sendMessage(Text.literal("No path found!"), false);
@@ -67,16 +66,17 @@ public class FollowBlock extends Action {
         task.cancel(true);
         return;
       }
-      cpf.debugPath(path.stream().toList());
+      if(path == null || path.isEmpty()) return;
+      pef.debugPath(path.stream().toList());
     }, 2L, 0L);
 
-    // Start walking through the cycle TODO: Make the movement "smoother", for some reason there is a large interval per step in the path
-    CompletableFuture.runAsync(() -> {
-      while (isActivated && !player.isRemoved() && player.isLoaded()) {
-        walkPath(new LinkedList<>(runningPath), player).join();
-      }
-      player.velocityModified = false;
-    });
+      // Start walking through the cycle TODO: Make the movement "smoother", for some reason there is a large interval per step in the path
+//    CompletableFuture.runAsync(() -> {
+//      while (isActivated && !player.isRemoved() && player.isLoaded()) {
+//        walkPath(new LinkedList<>(runningPath), player).join();
+//      }
+//      player.velocityModified = false;
+//    });
   }
 
   @Override
@@ -86,7 +86,7 @@ public class FollowBlock extends Action {
     }
     this.sprint = args.length > 1 && Boolean.parseBoolean(args[1]);
     if (args.length > 2) this.maxSearchDistance = Integer.parseInt(args[2]);
-    if (args.length > 3) this.simulationRounds = Integer.parseInt(args[3]);
+    if (args.length > 3) this.maxGaps = Integer.parseInt(args[3]);
     if (args.length > 4) this.stopWhenNearbyDistance = Integer.parseInt(args[4]);
   }
 

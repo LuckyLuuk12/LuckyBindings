@@ -14,8 +14,10 @@ public class Scheduler {
    * @param task The task to run
    * @param delay The delay in milliseconds before the task is run
    */
-  public static ScheduledFuture<?> runLater(Runnable task, long delay) {
-    return scheduler.schedule(task, delay*50L, TimeUnit.MILLISECONDS);
+  public static ScheduledFuture<?> runLater(SelfManagingTask task, long delay) {
+    ScheduledFuture<?>[] futureHolder = new ScheduledFuture<?>[1];
+    futureHolder[0] = scheduler.schedule(() -> task.run(futureHolder[0]), delay * 50L, TimeUnit.MILLISECONDS);
+    return futureHolder[0];
   }
 
   /**

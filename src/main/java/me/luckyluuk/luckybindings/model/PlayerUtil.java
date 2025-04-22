@@ -43,17 +43,17 @@ public class PlayerUtil {
     if (!agree) {
       for (int i = 0; i < step; i++) {
         final int index = i;
-        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 60L / (step * 4L));
-        Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 60L / (step * 4L));
+        Scheduler.runLater(ignored -> getPlayer().setHeadYaw(centerYaw - yawIncrement * (index + 1)), i * 60L / (step * 4L));
+        Scheduler.runLater(ignored -> getPlayer().setHeadYaw(centerYaw + yawIncrement * (index + 1)), (i + step) * 60L / (step * 4L));
       }
-      Scheduler.runLater(() -> getPlayer().setHeadYaw(centerYaw), 60L);
+      Scheduler.runLater(ignored -> getPlayer().setHeadYaw(centerYaw), 60L);
     } else {
       getPlayer().setPitch(0);
       for (int i = 0; i < step; i++) {
-        Scheduler.runLater(() -> getPlayer().setPitch(-15), i * 60L / (step * 4L));
-        Scheduler.runLater(() -> getPlayer().setPitch(15), (i + step) * 60L / (step * 4L));
+        Scheduler.runLater(ignored -> getPlayer().setPitch(-15), i * 60L / (step * 4L));
+        Scheduler.runLater(ignored -> getPlayer().setPitch(15), (i + step) * 60L / (step * 4L));
       }
-      Scheduler.runLater(() -> getPlayer().setPitch(0), 60L);
+      Scheduler.runLater(ignored -> getPlayer().setPitch(0), 60L);
     }
   }
 
