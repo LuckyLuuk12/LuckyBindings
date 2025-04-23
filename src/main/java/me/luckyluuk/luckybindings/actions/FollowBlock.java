@@ -1,7 +1,7 @@
 package me.luckyluuk.luckybindings.actions;
 
 import me.luckyluuk.luckybindings.handlers.Scheduler;
-import me.luckyluuk.luckybindings.model.PathEdgeFinder;
+import me.luckyluuk.luckybindings.model.PathMiddleFinder;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -18,9 +18,8 @@ import static me.luckyluuk.luckybindings.model.PlayerUtil.*;
 public class FollowBlock extends Action {
   private Block block;
   private boolean sprint = false;
-  private int maxSearchDistance = 3;
-  private int stopWhenNearbyDistance = 32;
-  private int maxGaps = 0;
+  private final Collection<Integer> options = new ArrayList<>();
+
   private boolean isActivated = false;
   private Queue<BlockPos> path = new LinkedList<>();
 
@@ -52,8 +51,8 @@ public class FollowBlock extends Action {
       return;
     }
 
-    PathEdgeFinder pef = new PathEdgeFinder(player.getWorld(), player, block, maxSearchDistance, maxGaps);
-    path = new LinkedList<>(pef.findPath());
+    PathMiddleFinder pmf = new PathMiddleFinder(player, block, options);
+    path = new LinkedList<>(pmf.findPath());
     Queue<BlockPos> runningPath = new LinkedList<>(path);
     if (path.isEmpty()) {
       player.sendMessage(Text.literal("No path found!"), false);
@@ -67,7 +66,7 @@ public class FollowBlock extends Action {
         return;
       }
       if(path == null || path.isEmpty()) return;
-      pef.debugPath(path.stream().toList());
+      pmf.debugPath(path.stream().toList());
     }, 2L, 0L);
 
       // Start walking through the cycle TODO: Make the movement "smoother", for some reason there is a large interval per step in the path
@@ -85,9 +84,10 @@ public class FollowBlock extends Action {
       this.block = Registries.BLOCK.get(Identifier.of(args[0]));
     }
     this.sprint = args.length > 1 && Boolean.parseBoolean(args[1]);
-    if (args.length > 2) this.maxSearchDistance = Integer.parseInt(args[2]);
-    if (args.length > 3) this.maxGaps = Integer.parseInt(args[3]);
-    if (args.length > 4) this.stopWhenNearbyDistance = Integer.parseInt(args[4]);
+//    if (args.length > 2) this.maxSearchDistance = Integer.parseInt(args[2]);
+//    if (args.length > 3) this.maxGaps = Integer.parseInt(args[3]);
+//    if (args.length > 4) this.stopWhenNearbyDistance = Integer.parseInt(args[4]);
+    for (int i = 2; i < args.length; i++) options.add(Integer.parseInt(args[i]));
   }
 
   /**
