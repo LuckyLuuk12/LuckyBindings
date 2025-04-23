@@ -4,6 +4,7 @@ import lombok.Getter;
 import me.luckyluuk.luckybindings.handlers.Scheduler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.MovementType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
@@ -11,6 +12,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.EntityView;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -69,38 +71,8 @@ public class PlayerUtil {
 
   static public void lookAtYaw(@Nullable BlockPos targetPos) {
     if (targetPos == null || noPlayer()) return;
-    BlockPos playerPos = getPlayer().getBlockPos();
-    double deltaX = targetPos.getX() - playerPos.getX();
-    double deltaZ = targetPos.getZ() - playerPos.getZ();
-
-    // Calculate the angle in radians
-    double angle = Math.atan2(deltaZ, deltaX);
-
-    // Convert the angle to degrees
-    double newYaw = Math.toDegrees(angle) - 90; // Subtract 90 to adjust for Minecraft's yaw convention
-
-    // Get the current body yaw
-    float currentBodyYaw = getPlayer().getBodyYaw();
-
-    // Normalize the yaw values to ensure smooth interpolation
-    newYaw = (newYaw + 360) % 360;
-    currentBodyYaw = (currentBodyYaw + 360) % 360;
-
-    // Interpolate between the current body yaw and the new head yaw
-    float interpolatedBodyYaw = currentBodyYaw + 0.5f * (float) (newYaw - currentBodyYaw);
-
-    // Normalize the interpolated body yaw
-    interpolatedBodyYaw = (interpolatedBodyYaw + 360) % 360;
-
-    // Convert back to [-180, 180] range
-//    if (interpolatedBodyYaw > 180) interpolatedBodyYaw -= 360;
-//    if (interpolatedBodyYaw < -180) interpolatedBodyYaw += 360;
-//    if (newYaw > 180) newYaw -= 360;
-//    if (newYaw < -180) newYaw += 360;
-
-    // Set the player's yaw
-    getPlayer().setHeadYaw((float) newYaw);
-    getPlayer().setBodyYaw(interpolatedBodyYaw);
+    Vec3d target = new Vec3d(targetPos.getX(), getPlayer().getY(), targetPos.getZ());
+    getPlayer().lookAt(EntityAnchorArgumentType.EntityAnchor.FEET, target);
   }
 
   static public void lookAtPitch(@Nullable BlockPos targetPos) {
