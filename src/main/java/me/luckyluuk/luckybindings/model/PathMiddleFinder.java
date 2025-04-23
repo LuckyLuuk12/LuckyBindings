@@ -20,6 +20,7 @@ public class PathMiddleFinder {
   private final BlockPos origin;
   private final int maxRadius;
   private final int maxRounds;
+  private final int maxGapSize;
 
   private final Map<BlockPos, Integer> densityMap = new HashMap<>();
 
@@ -29,6 +30,7 @@ public class PathMiddleFinder {
     this.targetBlock = targetBlock;
     this.maxRadius = options.length > 0 ? options[0] : 64;
     this.maxRounds = options.length > 1 ? options[1] : 2;
+    this.maxGapSize = options.length > 2 ? options[2] : 1;
     this.origin = player.getBlockPos().down();
   }
   public PathMiddleFinder(ClientPlayerEntity player, Block block, Collection<Integer> options) {
@@ -144,7 +146,7 @@ public class PathMiddleFinder {
     }
 
     // Sort neighbors by density (descending) to prioritize denser paths
-    List<BlockPos> neighbors = getNeighbors(current);
+    List<BlockPos> neighbors = getNeighbors(current, false);
     neighbors.sort(Comparator.comparingInt((BlockPos bp) -> -densityMap.getOrDefault(bp, 0)));
 
     for (BlockPos neighbor : neighbors) {
@@ -230,14 +232,19 @@ public class PathMiddleFinder {
     // use the density map by default unless notUseDensityMap is set to true
     boolean useDensityMapCheck = notUseDensityMap.length == 0 || !notUseDensityMap[0];
     List<BlockPos> neighbors = new ArrayList<>();
-    for (int dx = -1; dx <= 1; dx++) {
-      for (int dz = -1; dz <= 1; dz++) {
-        if (dx == 0 && dz == 0) continue;
-        BlockPos neighbor = pos.add(dx, 0, dz);
-        if(useDensityMapCheck && densityMap.containsKey(neighbor)) neighbors.add(neighbor);
-        else if(world.getBlockState(neighbor).getBlock() == targetBlock) neighbors.add(neighbor);
+    int gap = 1;
+    while(neighbors.isEmpty() && gap <= maxGapSize) {
+      for (int dx = -gap; dx <= gap; dx++) {
+        for (int dz = -gap; dz <= gap; dz++) {
+          if (dx == 0 && dz == 0) continue;
+          BlockPos neighbor = pos.add(dx, 0, dz);
+          if(useDensityMapCheck && densityMap.containsKey(neighbor)) neighbors.add(neighbor);
+          else if(world.getBlockState(neighbor).getBlock() == targetBlock) neighbors.add(neighbor);
+        }
       }
+      gap++;
     }
+
     return neighbors;
   }
 }

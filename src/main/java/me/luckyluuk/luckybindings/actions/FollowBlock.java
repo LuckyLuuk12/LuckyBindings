@@ -34,9 +34,11 @@ public class FollowBlock extends Action {
         2. Whether to sprint while following the block (optional, default is false).
         3. The maximum search distance (optional, default is 64).
         4. The amount of path-sharpening rounds (optional, default is 2).
-        5. The distance your player must have from other players before stopping (optional, default is 32).
+        5. The maximum gap between blocks in the path (optional, default is 1).
+        6. The amount of steps taken to go from block to block (optional, default is 500).
+        7. The distance your player must have from other players before stopping (optional, default is 32).
            This is to prevent detection by staff or other players.
-        6. Whether to display the path with particles values <= 0 mean false (optional, default is false).
+        8. Whether to display the path with particles values <= 0 mean false (optional, default is false).
         """);
     setArgs(args);
   }
@@ -116,7 +118,7 @@ public class FollowBlock extends Action {
 
     // Move to the next position and chain the next call
     Queue<BlockPos> finalPath = path;
-    return moveTo(nextPos.up(), 500, sprint)
+    return moveTo(nextPos.up(), options.stream().skip(3).findFirst().orElse(500) , sprint)
       .thenCompose(success -> {
         lookAtYaw(nextPos.up().up());
         return walkPath(finalPath, player);

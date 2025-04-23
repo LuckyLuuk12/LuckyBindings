@@ -12,11 +12,12 @@ public enum Actions implements NameableEnum {
   FollowBlock(new FollowBlock("")),
   NodHead(new NodHead("")),
   Nothing(new Nothing("")),
+  InfoGUI(new InfoGUI("")),
   PathHighlight(new PathHighlight("")),
   PrepareChat(new PrepareChat(""));
 
 
-  private Action action;
+  private final Action action;
   Actions(Action action) {
     this.action = action;
   }
