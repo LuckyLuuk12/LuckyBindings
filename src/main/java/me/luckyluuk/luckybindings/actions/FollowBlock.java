@@ -2,6 +2,7 @@ package me.luckyluuk.luckybindings.actions;
 
 import me.luckyluuk.luckybindings.handlers.Scheduler;
 import me.luckyluuk.luckybindings.model.PathMiddleFinder;
+import me.luckyluuk.luckybindings.model.PlayerUtil;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -11,16 +12,14 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
-import static me.luckyluuk.luckybindings.model.PlayerUtil.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FollowBlock extends Action {
   private Block block;
   private boolean sprint = false;
   private final Collection<Integer> options = new ArrayList<>();
 
-  private boolean isActivated = false;
+  private final AtomicBoolean isActivated = new AtomicBoolean(false);
   private Queue<BlockPos> path = new LinkedList<>();
 
   public FollowBlock(String... args) {
@@ -45,42 +44,19 @@ public class FollowBlock extends Action {
 
   @Override
   public void execute() {
+
     ClientPlayerEntity player = MinecraftClient.getInstance().player;
     if (player == null || block == null) return;
-    isActivated = !isActivated;
-    if (!isActivated) {
+//    isActivated = !isActivated;
+    isActivated.set(!isActivated.get());
+    if (!isActivated.get()) {
       path.clear();
       return;
     }
     // Find the most optimal path to walk the shape of the pathway consisting of the target block
     PathMiddleFinder pmf = new PathMiddleFinder(player, block, options);
     path = new LinkedList<>(pmf.findPath());
-    Queue<BlockPos> runningPath = new LinkedList<>(path);
-    // If the path is empty, stop the action and notify the player
-    if (path.isEmpty()) {
-      player.sendMessage(Text.literal("No path found!"), false);
-      isActivated = false;
-      return;
-    }
-    player.sendMessage(Text.literal("Path found with " + path.size() + " blocks."), false);
-    // Debug / Display the path
-    Scheduler.runRepeatedly(task -> {
-      if(!isActivated) {
-        task.cancel(true);
-        return;
-      }
-      if(path == null || path.isEmpty() || options.size() > 5 && options.stream().skip(5).findFirst().orElse(0) <= 0) {
-        return;
-      }
-      pmf.debugPath(path.stream().toList());
-    }, 2L, 0L);
-    // Start walking through the cycle TODO: Make the movement "smoother", for some reason there is a large interval per step in the path
-    CompletableFuture.runAsync(() -> {
-      while (isActivated && !player.isRemoved() && player.isLoaded()) {
-        walkPath(new LinkedList<>(runningPath), player).join();
-      }
-      player.velocityModified = false;
-    });
+    walk(player, path, pmf);
   }
 
   @Override
@@ -92,41 +68,35 @@ public class FollowBlock extends Action {
     for (int i = 2; i < args.length; i++) options.add(Integer.parseInt(args[i]));
   }
 
-  /**
-   * Walks a Queue of BlockPos positions.
-   * @param path The path to walk
-   * @param player The player to walk
-   * @return A CompletableFuture that completes when the path is finished
-   */
-  private CompletableFuture<Boolean> walkPath(Queue<BlockPos> path, ClientPlayerEntity player) {
-    if (!isActivated) {
-      return CompletableFuture.completedFuture(false);
-    }
-
+  private void walk(ClientPlayerEntity player, Queue<BlockPos> path, PathMiddleFinder pmf) {
+    Queue<BlockPos> runningPath = new LinkedList<>(path);
+    // If the path is empty, stop the action and notify the player
     if (path.isEmpty()) {
-      // Refill the path and restart walking
-      path = this.path;
-      if (path.isEmpty()) {
-        return CompletableFuture.completedFuture(false);
+      player.sendMessage(Text.literal("No path found!"), false);
+      isActivated.set(false);
+      return;
+    }
+    player.sendMessage(Text.literal("Path found with " + runningPath.size() + " blocks."), false);
+    // Debug / Display the path
+    Scheduler.runRepeatedly(task -> {
+      if(!isActivated.get()) {
+        task.cancel(true);
+        return;
       }
-    }
-
-    BlockPos nextPos = path.poll();
-    if (nextPos == null) {
-      return CompletableFuture.completedFuture(false);
-    }
-
-    // Move to the next position and chain the next call
-    Queue<BlockPos> finalPath = path;
-    return moveTo(nextPos.up(), options.stream().skip(3).findFirst().orElse(500) , sprint)
-      .thenCompose(success -> {
-        lookAtYaw(nextPos.up().up());
-        return walkPath(finalPath, player);
-      })
-      .exceptionally(ex -> {
-        player.sendMessage(Text.literal("Failed to move: " + ex), false);
-        isActivated = false;
-        return false;
-      });
+      if(path.isEmpty() || options.size() > 5 && options.stream().skip(5).findFirst().orElse(0) <= 0) {
+        return;
+      }
+      pmf.debugPath(path.stream().toList());
+    }, 2L, 0L);
+    // Start walking the path
+    PlayerUtil.walkPath(runningPath, isActivated, sprint).thenAccept(b -> {
+      if(b) {
+        walk(player, path, pmf);
+      }
+    }).exceptionally(ex -> {
+      player.sendMessage(Text.literal("Error while walking path: " + ex.getMessage()), false);
+      isActivated.set(false);
+      return null;
+    });
   }
 }

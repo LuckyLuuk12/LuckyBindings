@@ -4,21 +4,22 @@ import lombok.Getter;
 import me.luckyluuk.luckybindings.handlers.Scheduler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.command.argument.EntityAnchorArgumentType;
-import net.minecraft.entity.MovementType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.EntityView;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
+@SuppressWarnings("unused")
 @Getter
 public class PlayerUtil {
   static public ClientPlayerEntity getPlayer() {
@@ -71,8 +72,14 @@ public class PlayerUtil {
 
   static public void lookAtYaw(@Nullable BlockPos targetPos) {
     if (targetPos == null || noPlayer()) return;
-    Vec3d target = new Vec3d(targetPos.getX(), getPlayer().getY(), targetPos.getZ());
-    getPlayer().lookAt(EntityAnchorArgumentType.EntityAnchor.FEET, target);
+    double d = targetPos.getX() + 0.5 - getPlayer().getX();
+    double f = targetPos.getZ() + 0.5 - getPlayer().getZ();
+//    getPlayer().lookAt(EntityAnchorArgumentType.EntityAnchor.FEET, target);
+    double yaw = Math.atan2(f, d) * 180.0 / Math.PI - 90.0;
+    getPlayer().setYaw((float) yaw);
+//    getPlayer().setHeadYaw((float) yaw);
+//    getPlayer().setBodyYaw((float) yaw);
+//    getPlayer().prevYaw = (float) yaw;
   }
 
   static public void lookAtPitch(@Nullable BlockPos targetPos) {
@@ -205,9 +212,6 @@ public class PlayerUtil {
 
       direction = direction.normalize();
 
-      // Optional: face target
-//      faceTarget(player, targetPos);
-
       // Set velocity toward the target
       double speed = player.getMovementSpeed();
       if (player.isSprinting()) {
@@ -216,7 +220,7 @@ public class PlayerUtil {
       Vec3d velocity = direction.multiply(speed * 2.5); // tune as needed
       player.setVelocity(velocity);
 //      player.velocityModified = true;
-    }, 1L);
+    }, 0L);
 
     return future;
   }
@@ -278,5 +282,60 @@ public class PlayerUtil {
       if(range < 0.0 || e < range * range) return false;
     }
     return true;
+  }
+
+  public static CompletableFuture<Boolean> walkPath(Queue<BlockPos> path, AtomicBoolean isActivated, boolean sprint) {
+    CompletableFuture<Boolean> future = new CompletableFuture<>();
+
+    if (path == null || path.isEmpty() || !isActivated.get() || PlayerUtil.noPlayer()) {
+      future.complete(false);
+      return future;
+    }
+
+    ClientPlayerEntity player = PlayerUtil.getPlayer();
+    player.setSprinting(sprint);
+    AtomicReference<BlockPos> lastPos = new AtomicReference<>(null);
+    Scheduler.runRepeatedly(task -> {
+      if (!isActivated.get() || path.isEmpty()) {
+        MinecraftClient.getInstance().options.forwardKey.setPressed(false); // Stop walking
+        task.cancel(true);
+        future.complete(path.isEmpty()); // Complete if path is empty
+        return;
+      }
+//      double distance = player.getPos().squaredDistanceTo(path.peek().getX() + 0.5, player.getY(), path.peek().getZ() + 0.5);
+//      BlockPos nextPos = path.poll();
+//      if (nextPos == null) {
+//        MinecraftClient.getInstance().options.forwardKey.setPressed(false); // Stop walking
+//        task.cancel(true);
+//        future.complete(false);
+//        return;
+//      }
+//
+//      PlayerUtil.lookAtYaw(nextPos.up()); // Look at the next position
+//      MinecraftClient.getInstance().options.forwardKey.setPressed(true); // Start walking
+//
+//      Vec3d playerPos = player.getPos();
+//      Vec3d targetVec = new Vec3d(nextPos.getX() + 0.5, playerPos.y, nextPos.getZ() + 0.5);
+//      if (playerPos.squaredDistanceTo(targetVec) < 0.25) { // Close enough to the target
+//        MinecraftClient.getInstance().options.forwardKey.setPressed(false); // Stop walking
+//      }
+      // First check if lastPos is null or the distance between lastPos and current getPlayer()'s pos is less than 0.15, if so, poll the next position
+      BlockPos next = lastPos.get() == null || lastPos.get().getSquaredDistance(player.getPos()) < 0.5 ? path.poll() : lastPos.get();
+      // If next is null, stop walking
+      if (next == null) {
+        MinecraftClient.getInstance().options.forwardKey.setPressed(false); // Stop walking
+        task.cancel(true);
+        future.complete(true);
+        return;
+      }
+      // If next is not null, set lastPos to next
+      lastPos.set(next);
+      // Look at the next position
+      lookAtYaw(next.up());
+      // Force forward-key to be pressed
+      MinecraftClient.getInstance().options.forwardKey.setPressed(true);
+    }, 1L, 1L); // Adjust delay as needed
+
+    return future;
   }
 }
