@@ -2,9 +2,14 @@ package me.luckyluuk.luckybindings.gui;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+
 
 public class ChestGUIScreen extends HandledScreen<ChestGUIScreenHandler> {
+  private static final Identifier CHEST_TEXTURE = Identifier.tryParse("minecraft", "textures/gui/container/generic_54.png");
+
 
   public ChestGUIScreen(ChestGUIScreenHandler handler, Text title) {
     super(handler, new DummyPlayerInventory(), title);
@@ -16,7 +21,24 @@ public class ChestGUIScreen extends HandledScreen<ChestGUIScreenHandler> {
 
   @Override
   protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-    // You can draw a background texture here if you'd like
+    // Attempt to draw a proper chest gui... no success yet... ):
+    int x = (width - backgroundWidth) / 2;
+    int y = (height - backgroundHeight) / 2;
+
+    // Draw the chest GUI texture
+    context.drawTexture(
+      RenderLayer::getGuiOpaqueTexturedBackground,
+      CHEST_TEXTURE,
+      x, y,          // screen position
+      0, 0,          // texture position (u, v)
+      backgroundWidth, backgroundHeight,  // size on screen
+      backgroundWidth, backgroundHeight,  // region size in texture
+      256, 256,      // total texture size (Minecraft textures are typically 256x256)
+      0xFFFFFF       // no tinting
+
+    );
+
+
   }
 
   @Override
@@ -33,11 +55,10 @@ public class ChestGUIScreen extends HandledScreen<ChestGUIScreenHandler> {
 
   @Override
   public boolean mouseClicked(double mouseX, double mouseY, int button) {
-    boolean result = super.mouseClicked(mouseX, mouseY, button);
     if (focusedSlot != null && focusedSlot.hasStack()) {
       handler.onSlotClick(focusedSlot.getIndex());
     }
-    return result;
+    return true;
   }
 }
 

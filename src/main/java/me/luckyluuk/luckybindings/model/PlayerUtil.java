@@ -8,7 +8,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.EntityView;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("unused")
@@ -159,97 +157,6 @@ public class PlayerUtil {
     }
   }
 
-//  static public void moveTo(@Nullable BlockPos targetPos, boolean... sprint) {
-//    if (targetPos == null || noPlayer()) return;
-//    getPlayer().setSprinting(sprint.length > 0 && sprint[0]);
-//
-//    BlockPos playerPos = getPlayer().getBlockPos();
-//    double deltaX = targetPos.getX() - playerPos.getX();
-//    double deltaY = targetPos.getY() - playerPos.getY();
-//    double deltaZ = targetPos.getZ() - playerPos.getZ();
-//
-//    Vec3d movementVector = new Vec3d(deltaX, deltaY, deltaZ);
-//
-//    // Limit the movement vector to a maximum length of 3 blocks
-//    double maxDistance = getPlayer().getMovementSpeed()*3;
-//    if (movementVector.length() > maxDistance) {
-//      movementVector = movementVector.normalize().multiply(maxDistance);
-//    }
-//
-//    getPlayer().move(MovementType.SELF, movementVector);
-//  }
-
-  static public CompletableFuture<Boolean> moveTo(@Nullable BlockPos targetPos, int maxSteps, boolean... sprint) {
-    CompletableFuture<Boolean> future = new CompletableFuture<>();
-    if (targetPos == null || noPlayer()) {
-      future.completeExceptionally(new IllegalArgumentException("Target position is null or player is unavailable."));
-      return future;
-    }
-
-    ClientPlayerEntity player = getPlayer();
-    player.setSprinting(sprint.length > 0 && sprint[0]);
-
-    AtomicInteger steps = new AtomicInteger(0);
-
-    Scheduler.runRepeatedly(task -> {
-      if (steps.incrementAndGet() > maxSteps) {
-        player.setVelocity(Vec3d.ZERO); // stop movement
-        future.completeExceptionally(new IllegalStateException("Max steps exceeded."));
-        task.cancel(true);
-        return;
-      }
-
-      Vec3d playerPos = player.getPos();
-      Vec3d targetVec = new Vec3d(targetPos.getX() + 0.5, playerPos.y, targetPos.getZ() + 0.5);
-      Vec3d direction = targetVec.subtract(playerPos);
-
-      if (direction.lengthSquared() < 0.25) { // close enough to target
-        player.setVelocity(Vec3d.ZERO); // stop movement
-        future.complete(true);
-        task.cancel(true);
-        return;
-      }
-
-      direction = direction.normalize();
-
-      // Set velocity toward the target
-      double speed = player.getMovementSpeed();
-      if (player.isSprinting()) {
-        speed *= 1.3;
-      }
-      Vec3d velocity = direction.multiply(speed * 2.5); // tune as needed
-      player.setVelocity(velocity);
-//      player.velocityModified = true;
-    }, 0L);
-
-    return future;
-  }
-
-
-//  static public void moveTo(@Nullable BlockPos targetPos, boolean... sprint) {
-//    if (targetPos == null || noPlayer()) return;
-//
-//    ClientPlayerEntity player = getPlayer();
-//    player.setSprinting(sprint.length > 0 && sprint[0]);
-//
-//    // Calculate the direction vector to the target position
-//    Vec3d playerPos = player.getPos();
-//    Vec3d targetVec = new Vec3d(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5); // Center of the block
-//    Vec3d direction = targetVec.subtract(playerPos).normalize();
-//
-//    // Calculate the movement speed (walking or sprinting)
-//    double speed = player.getMovementSpeed();
-//    if (player.isSprinting()) {
-//      speed *= 1.3; // Sprinting multiplier
-//    }
-//
-//    // Calculate the movement vector for this tick
-//    Vec3d movementVector = direction.multiply(speed / 20.0); // Divide by 20 ticks per second
-//
-//    // Apply the movement vector using the game's physics
-//    player.move(MovementType.SELF, movementVector);
-//  }
-
   static public ArrayList<PlayerEntity> getPlayersInRange(double range) {
     if(noPlayer() || isNoPlayerInRange(range)) return new ArrayList<>();
     return new ArrayList<>(getPlayer().getWorld().getEntitiesByClass(PlayerEntity.class, getPlayer().getBoundingBox().expand(range), player -> player != getPlayer()));
@@ -284,9 +191,9 @@ public class PlayerUtil {
     return true;
   }
 
-  public static CompletableFuture<Boolean> walkPath(Queue<BlockPos> path, AtomicBoolean isActivated, boolean sprint) {
+  public static CompletableFuture<Boolean> walkPath(Queue<BlockPos> path, AtomicBoolean isActivated, boolean sprint, int... stopIfWithin) {
     CompletableFuture<Boolean> future = new CompletableFuture<>();
-
+    int stopDistance = stopIfWithin.length > 0 ? stopIfWithin[0] : -1;
     if (path == null || path.isEmpty() || !isActivated.get() || PlayerUtil.noPlayer()) {
       future.complete(false);
       return future;
@@ -296,29 +203,16 @@ public class PlayerUtil {
     player.setSprinting(sprint);
     AtomicReference<BlockPos> lastPos = new AtomicReference<>(null);
     Scheduler.runRepeatedly(task -> {
+      if(!isNoPlayerInRange(stopDistance)) {
+        MinecraftClient.getInstance().options.forwardKey.setPressed(false);
+        return;
+      }
       if (!isActivated.get() || path.isEmpty()) {
         MinecraftClient.getInstance().options.forwardKey.setPressed(false); // Stop walking
         task.cancel(true);
         future.complete(path.isEmpty()); // Complete if path is empty
         return;
       }
-//      double distance = player.getPos().squaredDistanceTo(path.peek().getX() + 0.5, player.getY(), path.peek().getZ() + 0.5);
-//      BlockPos nextPos = path.poll();
-//      if (nextPos == null) {
-//        MinecraftClient.getInstance().options.forwardKey.setPressed(false); // Stop walking
-//        task.cancel(true);
-//        future.complete(false);
-//        return;
-//      }
-//
-//      PlayerUtil.lookAtYaw(nextPos.up()); // Look at the next position
-//      MinecraftClient.getInstance().options.forwardKey.setPressed(true); // Start walking
-//
-//      Vec3d playerPos = player.getPos();
-//      Vec3d targetVec = new Vec3d(nextPos.getX() + 0.5, playerPos.y, nextPos.getZ() + 0.5);
-//      if (playerPos.squaredDistanceTo(targetVec) < 0.25) { // Close enough to the target
-//        MinecraftClient.getInstance().options.forwardKey.setPressed(false); // Stop walking
-//      }
       // First check if lastPos is null or the distance between lastPos and current getPlayer()'s pos is less than 0.15, if so, poll the next position
       BlockPos next = lastPos.get() == null || lastPos.get().getSquaredDistance(player.getPos()) < 0.5 ? path.poll() : lastPos.get();
       // If next is null, stop walking
@@ -333,6 +227,7 @@ public class PlayerUtil {
       // Look at the next position
       lookAtYaw(next.up());
       // Force forward-key to be pressed
+      MinecraftClient.getInstance().options.sprintKey.setPressed(sprint);
       MinecraftClient.getInstance().options.forwardKey.setPressed(true);
     }, 1L, 1L); // Adjust delay as needed
 

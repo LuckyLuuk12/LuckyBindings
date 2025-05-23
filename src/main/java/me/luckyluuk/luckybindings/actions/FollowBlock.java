@@ -89,7 +89,8 @@ public class FollowBlock extends Action {
       pmf.debugPath(path.stream().toList());
     }, 2L, 0L);
     // Start walking the path
-    PlayerUtil.walkPath(runningPath, isActivated, sprint).thenAccept(b -> {
+    int stopDistance = options.size() > 6 ? options.stream().skip(6).findFirst().orElse(0) : 32;
+    PlayerUtil.walkPath(runningPath, isActivated, sprint, stopDistance).thenAccept(b -> {
       if(b) {
         walk(player, path, pmf);
       }

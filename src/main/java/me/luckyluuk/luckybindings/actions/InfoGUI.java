@@ -51,7 +51,7 @@ public class InfoGUI extends Action {
 
   }
 
-
+  private static final int ITEMS_PER_PAGE = 53;
 
   private void openPlayerGUI(int... page) {
     int pageOffset = page.length > 0 ? page[0] : 0;
@@ -59,10 +59,12 @@ public class InfoGUI extends Action {
     List<PlayerEntity> players = MinecraftClient.getInstance().getNetworkHandler() == null || MinecraftClient.getInstance().world == null ? new ArrayList<>() :
       MinecraftClient.getInstance().getNetworkHandler().getPlayerList().stream()
         .map(info -> MinecraftClient.getInstance().world.getPlayerByUuid(info.getProfile().getId()))
-        .filter(Objects::nonNull)
+        .filter(Objects::nonNull) // Filter out null players
+        .filter(new HashSet<>()::add) // Remove duplicates
+        .filter(p -> MinecraftClient.getInstance().player == null || p.getUuid() != MinecraftClient.getInstance().player.getUuid()) // Remove self
         .toList();
 
-    for (int i = pageOffset * 54; i < (pageOffset + 1) * 54 - 1 && i < players.size(); i++) {
+    for (int i = pageOffset * ITEMS_PER_PAGE; i < (pageOffset + 1) * ITEMS_PER_PAGE && i < players.size(); i++) {
       PlayerEntity p = players.get(i);
       ItemStack skull = modifyItem(setSkullOwner(new ItemStack(Items.PLAYER_HEAD), p), "§f"+p.getName().getString(),
         "§eClick to display particle path to player shortly",
@@ -70,11 +72,11 @@ public class InfoGUI extends Action {
         "§7Location: " + p.getBlockX() + ", " + p.getBlockY() + ", " + p.getBlockZ(),
         "§7Distance: " + Math.round(p.distanceTo(MinecraftClient.getInstance().player) * 100.0) / 100.0 + " blocks");
 
-      int slotIndex = i % 54;
-      playerGui.setItem(slotIndex, skull, (s) -> {});
+      int slotIndex = i % 53;
+      playerGui.setItem(slotIndex, skull, (s) -> MinecraftClient.getInstance().player.sendMessage(Text.literal("§eFollowing " + p.getName().getString() + " for 5 seconds..."), false));
     }
     // Add a button to go to the next page
-    if (players.size() > (pageOffset + 1) * 54 - 1) {
+    if (players.size() > (pageOffset + 1) * ITEMS_PER_PAGE) {
       ItemStack nextPage = modifyItem(new ItemStack(Items.ARROW), "§6Next Page","§eClick to go to the next page");
       playerGui.setItem(53, nextPage, (s) -> openPlayerGUI(pageOffset + 1));
     }
@@ -103,7 +105,12 @@ public class InfoGUI extends Action {
   private ItemStack createPlayerCountItem() {
     ItemStack item = new ItemStack(Items.PLAYER_HEAD);
     int playerCount = MinecraftClient.getInstance().getNetworkHandler() == null || MinecraftClient.getInstance().world == null ? 0 :
-      MinecraftClient.getInstance().getNetworkHandler().getPlayerList().size();
+      MinecraftClient.getInstance().getNetworkHandler().getPlayerList().stream()
+        .map(info -> MinecraftClient.getInstance().world.getPlayerByUuid(info.getProfile().getId()))
+        .filter(Objects::nonNull) // Filter out null players
+        .filter(new HashSet<>()::add) // Remove duplicates
+        .filter(p -> MinecraftClient.getInstance().player == null || p.getUuid() != MinecraftClient.getInstance().player.getUuid()) // Remove self
+        .toList().size();
     return modifyItem(item, "§fPlayers §7("+playerCount+")",
       "§eClick to view players",
       "§cNote: This is a client-side list,",
@@ -113,6 +120,7 @@ public class InfoGUI extends Action {
   private ItemStack createMOTDItem() {
     ItemStack item = new ItemStack(Items.BOOK);
     String motd = MinecraftClient.getInstance().getServer() == null ? "?" : MinecraftClient.getInstance().getServer().getServerMotd();
+    if (motd == null || motd.isBlank()) motd = "§cNo MOTD set";
     List<String> motdList = Arrays.asList(motd.split("\n"));
     return modifyItem(item, "§fServer MOTD", motdList.toArray(new String[0]));
   }
