@@ -4,8 +4,7 @@ package nl.kablan.luckybindings;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import nl.kablan.luckybindings.commands.LuckyBindingsCommands;
 
 @Mod(Constants.MOD_ID)
@@ -21,10 +20,11 @@ public class LuckyBindings {
         Constants.LOG.info("Hello NeoForge world!");
         CommonClass.init();
 
-        NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
+        // NeoForge does not have ModMenu; expose config via client command.
+        eventBus.addListener(this::onRegisterClientCommands);
     }
 
-    private void onRegisterCommands(RegisterCommandsEvent event) {
+    private void onRegisterClientCommands(RegisterClientCommandsEvent event) {
         LuckyBindingsCommands.register(event.getDispatcher());
     }
 }

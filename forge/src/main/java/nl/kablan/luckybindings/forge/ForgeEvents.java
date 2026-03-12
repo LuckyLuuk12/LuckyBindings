@@ -1,15 +1,16 @@
 package nl.kablan.luckybindings.forge;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.client.event.RegisterClientCommandsEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import nl.kablan.luckybindings.commands.LuckyBindingsCommands;
 
+@SuppressWarnings("UtilityClassWithPublicConstructor")
 public class ForgeEvents {
-    public static void init() {
-        MinecraftForge.EVENT_BUS.addListener(ForgeEvents::onRegisterCommands);
-    }
 
-    public static void onRegisterCommands(RegisterCommandsEvent event) {
+    public ForgeEvents() {}
+
+    @SubscribeEvent
+    public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
         LuckyBindingsCommands.register(event.getDispatcher());
     }
 }
