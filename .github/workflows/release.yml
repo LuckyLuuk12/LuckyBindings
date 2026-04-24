@@ -1,0 +1,49 @@
+name: Build & Release
+
+# Triggers when you push a tag like: git tag v1.0.5 && git push origin v1.0.5
+# Re-pushing the same tag will update the existing release and replace its files.
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to create/update GitHub Releases
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # Caches Gradle wrapper + dependency caches so subsequent runs are fast
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      # Builds all loaders (common, fabric, neoforge, forge) in one shot
+      - name: Build all loaders
+        run: ./gradlew build
+
+      # Creates the release if it doesn't exist yet, or updates it if it does.
+      # The tag name (e.g. "v1.0.5") becomes both the git tag and the release name.
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "LuckyBindings ${{ github.ref_name }}"
+          generate_release_notes: true   # auto-generates a changelog from commits
+          fail_on_unmatched_files: false
+          files: |
+            fabric/build/libs/luckybindings-fabric-*.jar
+            neoforge/build/libs/luckybindings-neoforge-*.jar
+            forge/build/libs/LuckyBindings-forge-*.jar
+            common/build/libs/luckybindings-common-*.jar
